@@ -10,10 +10,12 @@ import {
   Shield,
   ArrowRight,
   LogOut,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -38,6 +40,12 @@ export default function LandingPage() {
       description:
         "Quickly generate polished prompts in minutes, saving you valuable time.",
     },
+    {
+      icon: <Bot className="h-6 w-6 text-primary" />,
+      title: "Meet Nexi - Your AI Assistant",
+      description:
+        "Chat with Nexi, your intelligent AI companion that helps refine ideas, suggests improvements, and guides you through the PRD creation process.",
+    },
   ];
 
   if (loading) {
@@ -59,8 +67,8 @@ export default function LandingPage() {
         </header>
         <main className="flex flex-col items-center justify-center flex-1 py-12">
           <Skeleton className="h-12 w-64 mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
-            {[...Array(3)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-6xl">
+            {[...Array(4)].map((_, i) => (
               <Card className="bg-card" key={i}>
                 <CardHeader>
                   <Skeleton className="h-8 w-8 mb-2 rounded-full" />
@@ -101,12 +109,12 @@ export default function LandingPage() {
                   <span className="text-sm text-muted-foreground">
                     {user?.email}
                   </span>
-                  <Button
+                  <InteractiveHoverButton
+                    text="Dashboard"
                     variant="ghost"
                     onClick={() => navigate("/dashboard")}
-                  >
-                    Dashboard
-                  </Button>
+                    className="px-4 py-2"
+                  />
                   <Button variant="ghost" size="sm" onClick={signOut}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -114,13 +122,18 @@ export default function LandingPage() {
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" onClick={() => navigate("/login")}>
-                    Sign In
-                  </Button>
-                  <Button onClick={() => navigate("/signup")}>
-                    Get Started
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
+                  <InteractiveHoverButton
+                    text="Sign In"
+                    variant="ghost"
+                    onClick={() => navigate("/login")}
+                    className="px-4 py-2"
+                  />
+                  <InteractiveHoverButton
+                    text="Get Started"
+                    variant="default"
+                    onClick={() => navigate("/signup")}
+                    className="px-4 py-2"
+                  />
                 </>
               )}
             </div>
@@ -162,27 +175,26 @@ export default function LandingPage() {
             </a>
             <div className="flex justify-center space-x-4 mt-4">
               {isAuthenticated ? (
-                <Button
-                  size="lg"
+                <InteractiveHoverButton
+                  text="Go to Dashboard"
+                  variant="default"
                   onClick={() => navigate("/dashboard")}
-                  className="mb-4"
-                >
-                  Go to Dashboard
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                  className="mb-4 px-8 py-4 text-lg"
+                />
               ) : (
                 <>
-                  <Button size="lg" onClick={() => navigate("/signup")}>
-                    Start Generating PRDs
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                  <Button
-                    size="lg"
+                  <InteractiveHoverButton
+                    text="Start Generating PRDs"
+                    variant="default"
+                    onClick={() => navigate("/signup")}
+                    className="px-8 py-4 text-lg"
+                  />
+                  <InteractiveHoverButton
+                    text="Sign In"
                     variant="outline"
                     onClick={() => navigate("/login")}
-                  >
-                    Sign In
-                  </Button>
+                    className="px-8 py-4 text-lg"
+                  />
                 </>
               )}
             </div>
@@ -203,7 +215,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-none shadow-lg">
                 <CardHeader>
@@ -234,17 +246,23 @@ export default function LandingPage() {
               Join thousands of product managers who are saving time and
               creating better PRDs with AI.
             </p>
-            {isAuthenticated ? (
-              <Button size="lg" onClick={() => navigate("/dashboard")}>
-                Go to Dashboard
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            ) : (
-              <Button size="lg" onClick={() => navigate("/signup")}>
-                Get Started for Free
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
+            <div className="flex justify-center">
+              {isAuthenticated ? (
+                <InteractiveHoverButton
+                  text="Go to Dashboard"
+                  variant="default"
+                  onClick={() => navigate("/dashboard")}
+                  className="px-8 py-4 text-lg"
+                />
+              ) : (
+                <InteractiveHoverButton
+                  text="Get Started"
+                  variant="default"
+                  onClick={() => navigate("/signup")}
+                  className="px-8 py-4 text-lg"
+                />
+              )}
+            </div>
           </div>
         </div>
       </section>

@@ -122,33 +122,34 @@ export function RichTextEditor({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Compact Single-Line Toolbar */}
-      <div className="border-b bg-card">
-        <div className="p-2 flex gap-1 flex-wrap items-center">
-          {/* Basic Formatting */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={editor.isActive("bold") ? "bg-muted" : ""}
-            title="Bold"
-          >
-            <Bold className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={editor.isActive("italic") ? "bg-muted" : ""}
-            title="Italic"
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={editor.isActive("underline") ? "bg-muted" : ""}
+      {/* Compact Toolbar with Better Layout */}
+      <div className="border-b bg-card flex-shrink-0">
+        <div className="p-2 flex gap-1 items-center overflow-x-auto">
+          {/* Basic Formatting Group */}
+          <div className="flex gap-1 items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={editor.isActive("bold") ? "bg-muted" : ""}
+              title="Bold"
+            >
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={editor.isActive("italic") ? "bg-muted" : ""}
+              title="Italic"
+            >
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={editor.isActive("underline") ? "bg-muted" : ""}
             title="Underline"
           >
             <UnderlineIcon className="h-4 w-4" />
@@ -338,176 +339,220 @@ export function RichTextEditor({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+          </div>
         </div>
       </div>
 
       {/* Enhanced Editor Content with Custom Styling */}
-      <div className="flex-1 overflow-auto bg-card">
-        <EditorContent
-          editor={editor}
-          className="h-full focus:outline-none"
-        />
-
-        {/* Custom CSS for enhanced editor styling */}
-        <style>{`
-          .ProseMirror {
-            padding: 2rem;
-            min-height: 100%;
-            outline: none;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            line-height: 1.6;
-            color: hsl(var(--foreground));
-          }
-
-          .ProseMirror h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 2rem 0 1rem 0;
-            color: hsl(var(--foreground));
-          }
-
-          .ProseMirror h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 1.5rem 0 0.75rem 0;
-            color: hsl(var(--foreground));
-          }
-
-          .ProseMirror p {
-            margin: 0.75rem 0;
-            color: hsl(var(--foreground));
-          }
-
-          .ProseMirror ul, .ProseMirror ol {
-            margin: 1rem 0;
-            padding-left: 1.5rem;
-          }
-
-          .ProseMirror li {
-            margin: 0.25rem 0;
-          }
-
-          .ProseMirror blockquote {
-            border-left: 4px solid hsl(var(--primary));
-            padding-left: 1rem;
-            margin: 1rem 0;
-            font-style: italic;
-            color: hsl(var(--muted-foreground));
-          }
-
-          .ProseMirror code {
-            background: hsl(var(--muted));
-            padding: 0.125rem 0.25rem;
-            border-radius: 0.25rem;
-            font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-            font-size: 0.875em;
-          }
-
-          .ProseMirror pre {
-            background: hsl(var(--muted));
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-          }
-
-          .ProseMirror pre code {
-            background: none;
-            padding: 0;
-          }
-
-          .ProseMirror mark,
-          .ProseMirror .neon-highlight {
-            background: #ffff00 !important; /* Neon yellow background */
-            color: #000000 !important; /* Black text for better contrast */
-            padding: 0.125rem 0.25rem;
-            border-radius: 0.25rem;
-            font-weight: 600; /* Slightly bolder for better readability */
-            box-shadow: 0 0 6px rgba(255, 255, 0, 0.4); /* Enhanced glow */
-            border: 1px solid rgba(255, 255, 0, 0.8); /* Subtle border */
-          }
-
-          .ProseMirror table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1rem 0;
-            border: 1px solid hsl(var(--border));
-          }
-
-          .ProseMirror th, .ProseMirror td {
-            border: 1px solid hsl(var(--border));
-            padding: 0.5rem;
-            text-align: left;
-          }
-
-          .ProseMirror th {
-            background: hsl(var(--muted));
-            font-weight: 600;
-          }
-
-          /* Task List Styling - Enhanced Checkboxes */
-          .ProseMirror ul[data-type="taskList"] {
-            list-style: none;
-            padding-left: 0;
-          }
-
-          .ProseMirror li[data-type="taskItem"] {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            margin: 0.5rem 0;
-          }
-
-          .ProseMirror li[data-type="taskItem"] > label {
-            flex-shrink: 0;
-            margin-top: 0.125rem;
-          }
-
-          .ProseMirror li[data-type="taskItem"] > div {
-            flex: 1;
-          }
-
-          .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
-            text-decoration: line-through;
-            opacity: 0.6;
-          }
-
-          .ProseMirror li[data-type="taskItem"] input[type="checkbox"] {
-            width: 1rem;
-            height: 1rem;
-            accent-color: hsl(var(--primary));
-            cursor: pointer;
-            border-radius: 0.25rem;
-          }
-
-          /* Text alignment */
-          .ProseMirror [data-text-align="left"] {
-            text-align: left;
-          }
-
-          .ProseMirror [data-text-align="center"] {
-            text-align: center;
-          }
-
-          .ProseMirror [data-text-align="right"] {
-            text-align: right;
-          }
-
-          /* Focus styles */
-          .ProseMirror:focus {
-            outline: none;
-          }
-
-          /* Placeholder */
-          .ProseMirror p.is-editor-empty:first-child::before {
-            content: "Start writing your idea...";
-            float: left;
-            color: hsl(var(--muted-foreground));
-            pointer-events: none;
-            height: 0;
-          }
-        `}</style>
+      <div className="flex-1 min-h-0 overflow-hidden bg-card">
+        <div className="h-full overflow-y-auto">
+          <EditorContent
+            editor={editor}
+            className="h-full focus:outline-none"
+          />
+        </div>
       </div>
+
+      {/* Custom CSS for enhanced editor styling */}
+      <style>{`
+        .ProseMirror {
+          padding: 2rem;
+          min-height: 100%;
+          outline: none;
+          font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+          line-height: 1.6;
+          color: hsl(var(--foreground));
+        }
+
+        .ProseMirror h1 {
+          font-size: 2rem;
+          font-weight: 700;
+          margin: 2rem 0 1rem 0;
+          color: hsl(var(--foreground));
+        }
+
+        .ProseMirror h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin: 1.5rem 0 0.75rem 0;
+          color: hsl(var(--foreground));
+        }
+
+        .ProseMirror p {
+          margin: 0.75rem 0;
+          color: hsl(var(--foreground));
+        }
+
+        .ProseMirror ul, .ProseMirror ol {
+          margin: 1rem 0;
+          padding-left: 1.5rem;
+        }
+
+        .ProseMirror li {
+          margin: 0.25rem 0;
+        }
+
+        .ProseMirror blockquote {
+          border-left: 4px solid hsl(var(--primary));
+          padding-left: 1rem;
+          margin: 1rem 0;
+          font-style: italic;
+          color: hsl(var(--muted-foreground));
+        }
+
+        .ProseMirror code {
+          background: hsl(var(--muted));
+          padding: 0.125rem 0.25rem;
+          border-radius: 0.25rem;
+          font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+          font-size: 0.875em;
+        }
+
+        .ProseMirror pre {
+          background: hsl(var(--muted));
+          padding: 1rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin: 1rem 0;
+        }
+
+        .ProseMirror pre code {
+          background: none;
+          padding: 0;
+        }
+
+        .ProseMirror mark,
+        .ProseMirror .neon-highlight {
+          background: #ffff00 !important; /* Neon yellow background */
+          color: #000000 !important; /* Black text for better contrast */
+          padding: 0.125rem 0.25rem;
+          border-radius: 0.25rem;
+          font-weight: 600; /* Slightly bolder for better readability */
+          box-shadow: 0 0 6px rgba(255, 255, 0, 0.4); /* Enhanced glow */
+          border: 1px solid rgba(255, 255, 0, 0.8); /* Subtle border */
+        }
+
+        .ProseMirror table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1rem 0;
+          border: 1px solid hsl(var(--border));
+        }
+
+        .ProseMirror th, .ProseMirror td {
+          border: 1px solid hsl(var(--border));
+          padding: 0.5rem;
+          text-align: left;
+        }
+
+        .ProseMirror th {
+          background: hsl(var(--muted));
+          font-weight: 600;
+        }
+
+        /* Task List Styling - Enhanced Checkboxes */
+        .ProseMirror ul[data-type="taskList"] {
+          list-style: none;
+          padding-left: 0;
+        }
+
+        .ProseMirror li[data-type="taskItem"] {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.5rem;
+          margin: 0.5rem 0;
+        }
+
+        .ProseMirror li[data-type="taskItem"] > label {
+          flex-shrink: 0;
+          margin-top: 0.125rem;
+        }
+
+        .ProseMirror li[data-type="taskItem"] > div {
+          flex: 1;
+        }
+
+        .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+          text-decoration: line-through;
+          opacity: 0.6;
+        }
+
+        .ProseMirror li[data-type="taskItem"] input[type="checkbox"] {
+          width: 1rem;
+          height: 1rem;
+          accent-color: hsl(var(--primary));
+          cursor: pointer;
+          border-radius: 0.25rem;
+        }
+
+        /* Text alignment */
+        .ProseMirror [data-text-align="left"] {
+          text-align: left;
+        }
+
+        .ProseMirror [data-text-align="center"] {
+          text-align: center;
+        }
+
+        .ProseMirror [data-text-align="right"] {
+          text-align: right;
+        }
+
+        /* Focus styles */
+        .ProseMirror:focus {
+          outline: none;
+        }
+
+        /* Placeholder */
+        .ProseMirror p.is-editor-empty:first-child::before {
+          content: "Start writing your idea...";
+          float: left;
+          color: hsl(var(--muted-foreground));
+          pointer-events: none;
+          height: 0;
+        }
+
+        /* Custom Scrollbar Styling - Inherits from global styles */
+        .h-full.overflow-y-auto::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .h-full.overflow-y-auto::-webkit-scrollbar-track {
+          background: hsl(var(--muted) / 0.1);
+          border-radius: 4px;
+        }
+
+        .h-full.overflow-y-auto::-webkit-scrollbar-thumb {
+          background: hsl(var(--muted-foreground) / 0.3);
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+        }
+
+        .h-full.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background: hsl(var(--muted-foreground) / 0.5);
+        }
+
+        .h-full.overflow-y-auto::-webkit-scrollbar-thumb:active {
+          background: hsl(var(--muted-foreground) / 0.7);
+        }
+
+        /* Firefox scrollbar */
+        .h-full.overflow-y-auto {
+          scrollbar-width: thin;
+          scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted) / 0.1);
+        }
+
+        /* Hide scrollbar on mobile */
+        @media (max-width: 768px) {
+          .h-full.overflow-y-auto::-webkit-scrollbar {
+            display: none;
+          }
+          .h-full.overflow-y-auto {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

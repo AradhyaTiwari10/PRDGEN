@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { PRD } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Download, Edit, Heart, Share, Trash2, Copy } from "lucide-react";
+import { Download, Heart, Trash2, Copy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import {
@@ -44,7 +41,9 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
         content = `# ${prd.title}\n\n## Original Idea\n\n${prd.original_idea}\n\n## Product Requirements Document\n\n${prd.generated_prd}`;
         fileExtension = "md";
       } else {
-        content = `${prd.title}\n\nOriginal Idea:\n${prd.original_idea}\n\nProduct Requirements Document:\n${prd.generated_prd}`;
+        // For txt format, use plain text conversion
+        const plainTextPRD = markdownToPlainText(prd.generated_prd);
+        content = `${prd.title}\n\nOriginal Idea:\n${prd.original_idea}\n\nProduct Requirements Document:\n${plainTextPRD}`;
         fileExtension = "txt";
       }
 
@@ -71,13 +70,55 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
     }
   };
 
-  const handleCopyMarkdown = async () => {
+  // Function to convert markdown to plain text
+  const markdownToPlainText = (markdown: string): string => {
+    return markdown
+      // Remove headers (# ## ###) but keep the text
+      .replace(/^#{1,6}\s+(.+)$/gm, '$1')
+      // Remove bold/italic (**text** *text*) but keep the text
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      // Remove links [text](url) but keep the text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Convert code blocks ``` to plain text (preserve content)
+      .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
+      // Remove inline code backticks `code` but keep the text
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove blockquotes > but keep the text
+      .replace(/^>\s+(.+)$/gm, '$1')
+      // Convert bullet points to readable format
+      .replace(/^\*\s+(.+)$/gm, '• $1')
+      .replace(/^-\s+(.+)$/gm, '• $1')
+      // Convert numbered lists to readable format
+      .replace(/^\d+\.\s+(.+)$/gm, '$1')
+      // Clean up extra whitespace
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      .trim();
+  };
+
+  const handleCopyPlainText = async () => {
     try {
-      const content = `# ${prd.title}\n\n## Original Idea\n\n${prd.original_idea}\n\n## Product Requirements Document\n\n${prd.generated_prd}`;
-      await navigator.clipboard.writeText(content);
+      const plainText = markdownToPlainText(prd.generated_prd);
+      await navigator.clipboard.writeText(plainText);
       toast({
         title: "Copied to Clipboard",
-        description: "PRD content copied as markdown",
+        description: "Product Requirements Document copied as plain text",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy PRD content. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyMarkdown = async () => {
+    try {
+      await navigator.clipboard.writeText(prd.generated_prd);
+      toast({
+        title: "Copied to Clipboard",
+        description: "Product Requirements Document copied as markdown",
       });
     } catch (error) {
       toast({
@@ -112,16 +153,6 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
         variant: "destructive",
       });
     }
-  };
-
-  const handleShare = () => {
-    const url = `${window.location.origin}/prd/${prd.id}`;
-    navigator.clipboard.writeText(url);
-
-    toast({
-      title: "Link Copied",
-      description: "PRD link copied to clipboard",
-    });
   };
 
   const handleDelete = async () => {
@@ -169,20 +200,13 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
                   className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`}
                 />
               </Button>
-              <Button variant="outline" size="sm" onClick={handleShare}>
-                <Share className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
-                <Copy className="h-4 w-4 mr-2" />
-                Copy
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleExport("markdown")}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                Markdown
               </Button>
               <Button
                 variant="outline"
@@ -239,65 +263,33 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
 
       <Card className="bg-card">
         <CardHeader>
-          <CardTitle className="text-foreground">
-            Product Requirements Document
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-foreground">
+              Product Requirements Document
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyPlainText}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyMarkdown}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy as Markdown
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="prose dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-code:text-foreground prose-code:bg-muted prose-pre:bg-muted prose-pre:text-foreground prose-blockquote:text-muted-foreground prose-blockquote:border-primary">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                h1: ({ children }) => (
-                  <h1 className="text-2xl font-bold mt-8 mb-4 text-foreground">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-xl font-semibold mt-6 mb-3 text-foreground">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-lg font-medium mt-4 mb-2 text-foreground">
-                    {children}
-                  </h3>
-                ),
-                p: ({ children }) => (
-                  <p className="mb-4 text-muted-foreground leading-relaxed">
-                    {children}
-                  </p>
-                ),
-                ul: ({ children }) => (
-                  <ul className="mb-4 ml-6 list-disc space-y-1">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="mb-4 ml-6 list-decimal space-y-1">
-                    {children}
-                  </ol>
-                ),
-                li: ({ children }) => (
-                  <li className="text-muted-foreground">{children}</li>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4">
-                    {children}
-                  </blockquote>
-                ),
-                code: ({ children }) => (
-                  <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
-                    {children}
-                  </code>
-                ),
-                pre: ({ children }) => (
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4">
-                    {children}
-                  </pre>
-                ),
-              }}
-            >
-              {prd.generated_prd}
-            </ReactMarkdown>
+          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            {markdownToPlainText(prd.generated_prd)}
           </div>
         </CardContent>
       </Card>

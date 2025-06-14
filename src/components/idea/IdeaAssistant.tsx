@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
   Bot,
   User,
@@ -371,13 +370,13 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
   }
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 flex-shrink-0">
+    <div className="h-full flex flex-col bg-card rounded-lg border">
+      <div className="flex-shrink-0 p-4 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
-            Nexi
-          </CardTitle>
+            <h3 className="text-lg font-semibold">Nexi</h3>
+          </div>
           {conversations.length > 0 && (
             <Button
               variant="ghost"
@@ -389,17 +388,14 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
             </Button>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mt-1">
           Your AI product development assistant for "{idea.title}" Brainstorm with Nexi!!
         </p>
-      </CardHeader>
+      </div>
 
-      <Separator className="flex-shrink-0" />
-
-      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-        <div className="flex-1 overflow-hidden relative">
-          <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
-            <div className="p-4 space-y-4 min-h-full">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
+          <div className="p-4 space-y-4">
               {/* Welcome typing message */}
               {welcomeTypingMessage && (
                 <div className="flex gap-3 justify-start animate-in slide-in-from-left-2 duration-300">
@@ -576,35 +572,32 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
               </div>
             )}
             </div>
-          </ScrollArea>
-        </div>
+        </ScrollArea>
+      </div>
 
-        <Separator className="flex-shrink-0" />
-
-        <div className="p-4 flex-shrink-0">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <Input
-              ref={inputRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask about your idea..."
-              disabled={sending}
-              className="flex-1"
-            />
-            <Button
-              type="submit"
-              disabled={!message.trim() || sending}
-              size="sm"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </form>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex-shrink-0 border-t p-4">
+        <form onSubmit={handleSendMessage} className="flex gap-2">
+          <Input
+            ref={inputRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Ask about your idea..."
+            disabled={sending}
+            className="flex-1"
+          />
+          <Button
+            type="submit"
+            disabled={!message.trim() || sending}
+            size="sm"
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
