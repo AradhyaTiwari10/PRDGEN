@@ -96,7 +96,7 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
     }
   };
 
-  const sendMessage = async (userMessage: string) => {
+  const sendMessage = async (userMessage: string, onTypingStart?: (response: string) => void) => {
     if (!idea) {
       toast({
         title: 'Error',
@@ -118,8 +118,13 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
         conversations
       );
 
-      // Add assistant message
-      await addMessage(assistantResponse, 'assistant');
+      // Start typing animation if callback provided
+      if (onTypingStart) {
+        onTypingStart(assistantResponse);
+      } else {
+        // Add assistant message directly if no typing animation
+        await addMessage(assistantResponse, 'assistant');
+      }
     } catch (err) {
       toast({
         title: 'Error',
@@ -131,12 +136,26 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
     }
   };
 
-  const initializeConversation = async () => {
+  const addTypedMessage = async (message: string) => {
+    try {
+      await addMessage(message, 'assistant');
+    } catch (err) {
+      console.error('Error adding typed message:', err);
+    }
+  };
+
+  const initializeConversation = async (onWelcomeTypingStart?: (message: string) => void) => {
     if (!idea || conversations.length > 0) return;
 
     try {
       const welcomeMessage = await generateWelcomeMessage(idea);
-      await addMessage(welcomeMessage, 'assistant');
+
+      // Start typing animation for welcome message if callback provided
+      if (onWelcomeTypingStart) {
+        onWelcomeTypingStart(welcomeMessage);
+      } else {
+        await addMessage(welcomeMessage, 'assistant');
+      }
     } catch (err) {
       console.error('Failed to initialize conversation:', err);
     }
@@ -193,6 +212,8 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
     sending,
     error,
     sendMessage,
+    addTypedMessage,
+    initializeConversation,
     clearConversation,
     refreshConversations: fetchConversations,
   };
