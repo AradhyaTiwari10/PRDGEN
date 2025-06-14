@@ -3,20 +3,51 @@ import { Idea, IdeaConversation } from "@/types";
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY_2!);
 
-const ASSISTANT_SYSTEM_PROMPT = `You are an expert Product Development Assistant helping entrepreneurs refine and enhance product ideas into market-ready concepts. Provide actionable, specific advice on strategy, market fit, UX, technical feasibility, business model, GTM, and risk. Be professional, conversational, focused (2-3 short paragraphs), and encourage while being realistic. Ask clarifying questions, suggest next steps, and consider full idea context and history.`;
+const ASSISTANT_SYSTEM_PROMPT = `You are an expert Product Development Assistant specializing in helping entrepreneurs and product managers refine, develop, and enhance their product ideas.
+
+Your expertise includes:
+- Product strategy and positioning
+- Market analysis and competitive research
+- User experience and design thinking
+- Technical feasibility assessment
+- Business model development
+- Go-to-market strategies
+- Feature prioritization
+- Risk assessment and mitigation
+
+Guidelines for your responses:
+1. **Keep responses concise** - aim for 2-3 short paragraphs maximum (4-6 sentences total)
+2. **Use bullet points sparingly** - only 2-4 key points when needed
+3. **Be conversational and friendly** - write like a helpful mentor
+4. **Provide specific, actionable advice** rather than generic suggestions
+5. **Ask 1 focused question** to keep the conversation engaging
+6. **Reference the user's idea** to show you understand their context
+7. **Suggest 1-2 concrete next steps** they can take immediately
+8. **Be encouraging but realistic** about challenges
+9. **Format with proper spacing** - use line breaks between paragraphs
+10. **Avoid overwhelming the user** - quality over quantity in advice
+
+Always consider the full context of the user's idea including:
+- The idea title and description
+- Current status and priority
+- Market size and competition notes
+- Any additional notes or content
+- Previous conversation history
+
+Your goal is to help the user develop their idea into a successful product by providing expert guidance, asking the right questions, and suggesting practical next steps.`;
 
 export const generateAssistantResponse = async (
   idea: Idea,
   userMessage: string,
   conversationHistory: IdeaConversation[] = []
 ) => {
-  const model = genAI.getGenerativeModel({ 
+  const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     generationConfig: {
-      temperature: 0.8,
+      temperature: 0.7,
       topK: 40,
       topP: 0.95,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 512, // Reduced for shorter responses
     }
   });
 
@@ -51,7 +82,16 @@ ${historyContext}
 
 USER MESSAGE: ${userMessage}
 
-Please provide a helpful response based on the idea context and conversation history.`;
+Please provide a helpful, concise response based on the idea context and conversation history.
+
+RESPONSE REQUIREMENTS:
+- Keep it SHORT: Maximum 2-3 paragraphs (4-6 sentences total)
+- Use bullet points ONLY when essential (max 2-4 points)
+- Start each bullet point on a NEW LINE with proper spacing
+- Ask ONE focused question to engage the user
+- Provide 1-2 specific, actionable next steps
+- Be encouraging but realistic
+- Make it easy to read and not overwhelming`;
   
   const result = await model.generateContent(prompt);
   const response = await result.response;
@@ -60,13 +100,13 @@ Please provide a helpful response based on the idea context and conversation his
 };
 
 export const generateWelcomeMessage = async (idea: Idea) => {
-  const model = genAI.getGenerativeModel({ 
+  const model = genAI.getGenerativeModel({
     model: "gemini-2.0-flash",
     generationConfig: {
       temperature: 0.7,
       topK: 40,
       topP: 0.95,
-      maxOutputTokens: 512,
+      maxOutputTokens: 256, // Even shorter for welcome messages
     }
   });
 
@@ -79,7 +119,15 @@ Category: ${idea.category || 'Not specified'}
 Status: ${idea.status}
 Priority: ${idea.priority}
 
-Generate a brief, welcoming introduction message for this idea. Acknowledge the specific idea, highlight 1-2 key aspects that seem promising, and ask 1-2 thoughtful questions to help the user think deeper about their idea. Keep it conversational and encouraging, around 2-3 sentences.`;
+Generate a brief, welcoming introduction message for this idea.
+
+REQUIREMENTS:
+- Keep it SHORT: Maximum 2-3 sentences
+- Acknowledge the specific idea by name
+- Highlight 1 key aspect that seems promising
+- Ask 1 focused question to start the conversation
+- Be conversational, encouraging, and friendly
+- Use proper spacing between sentences`;
 
   const result = await model.generateContent(prompt);
   const response = await result.response;

@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useIdeaConversations } from '@/hooks/use-idea-conversations';
 import { Idea } from '@/types';
-import { formatDistanceToNow } from 'date-fns';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -127,11 +126,7 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Bot className="h-5 w-5 text-primary" />
-            AI Assistant
-            <Badge variant="secondary" className="ml-2">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Powered by Gemini
-            </Badge>
+            Nexi
           </CardTitle>
           {conversations.length > 0 && (
             <Button
@@ -145,7 +140,7 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          Get personalized advice and insights for "{idea.title}"
+          Your AI product development assistant for "{idea.title}"
         </p>
       </CardHeader>
 
@@ -179,28 +174,86 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
                   )}
                   
                   <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
                       conv.role === 'user'
                         ? 'bg-primary text-primary-foreground ml-auto'
                         : 'bg-muted'
                     }`}
                   >
                     {conv.role === 'assistant' ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <div className="prose prose-sm max-w-none dark:prose-invert prose-p:mb-3 prose-p:leading-relaxed prose-headings:mb-2 prose-headings:mt-4 prose-ul:mb-3 prose-ol:mb-3 prose-li:mb-1">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => (
+                              <p className="mb-3 leading-relaxed text-sm text-foreground">
+                                {children}
+                              </p>
+                            ),
+                            h1: ({ children }) => (
+                              <h1 className="text-base font-bold mt-4 mb-2 text-foreground">
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 className="text-sm font-semibold mt-3 mb-2 text-foreground">
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 className="text-sm font-medium mt-3 mb-1 text-foreground">
+                                {children}
+                              </h3>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="mb-3 ml-0 space-y-2 list-none">
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol className="mb-3 ml-0 space-y-2 list-none">
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => (
+                              <li className="text-sm text-foreground leading-relaxed flex items-start gap-2 mb-2">
+                                <span className="text-primary mt-1 flex-shrink-0">•</span>
+                                <span className="flex-1">{children}</span>
+                              </li>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="font-semibold text-foreground">
+                                {children}
+                              </strong>
+                            ),
+                            em: ({ children }) => (
+                              <em className="italic text-foreground">
+                                {children}
+                              </em>
+                            ),
+                            blockquote: ({ children }) => (
+                              <blockquote className="border-l-2 border-primary pl-3 my-3 italic text-muted-foreground">
+                                {children}
+                              </blockquote>
+                            ),
+                            code: ({ children }) => (
+                              <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono text-foreground">
+                                {children}
+                              </code>
+                            ),
+                            pre: ({ children }) => (
+                              <pre className="bg-muted p-3 rounded-md overflow-x-auto my-3 text-xs">
+                                {children}
+                              </pre>
+                            ),
+                          }}
+                        >
                           {conv.message}
                         </ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="text-sm">{conv.message}</p>
+                      <p className="text-sm leading-relaxed">{conv.message}</p>
                     )}
-                    <p className={`text-xs mt-1 ${
-                      conv.role === 'user' 
-                        ? 'text-primary-foreground/70' 
-                        : 'text-muted-foreground'
-                    }`}>
-                      {formatDistanceToNow(new Date(conv.created_at), { addSuffix: true })}
-                    </p>
                   </div>
                   
                   {conv.role === 'user' && (
