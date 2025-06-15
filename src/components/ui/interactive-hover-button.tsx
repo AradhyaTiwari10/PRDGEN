@@ -12,7 +12,7 @@ const InteractiveHoverButton = React.forwardRef<
   HTMLButtonElement,
   InteractiveHoverButtonProps
 >(({ text = "Button", variant = "default", className, ...props }, ref) => {
-  const baseClasses = "group relative cursor-pointer overflow-hidden rounded-full px-6 py-3 text-center font-semibold transition-all duration-300 flex items-center justify-center gap-2";
+  const baseClasses = "group relative cursor-pointer overflow-hidden rounded-full px-6 py-3 text-center font-semibold transition-all duration-300 flex items-center justify-center gap-2 text-sm leading-tight";
 
   const variantClasses = {
     default: "border bg-primary text-primary-foreground hover:bg-primary/90",
@@ -38,7 +38,7 @@ const InteractiveHoverButton = React.forwardRef<
       )}
       {...props}
     >
-      <span className="relative z-20 inline-block transition-all duration-300 group-hover:text-primary-foreground whitespace-nowrap">
+      <span className="relative z-20 inline-flex items-center transition-all duration-300 group-hover:text-primary-foreground text-center leading-tight">
         {text}
       </span>
       <div className="relative z-20 w-0 overflow-hidden transition-all duration-300 group-hover:w-4">

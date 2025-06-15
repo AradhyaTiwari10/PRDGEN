@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,15 +12,20 @@ import {
   ArrowRight,
   LogOut,
   Bot,
+  Keyboard,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
+import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
+import { useTheme } from "@/components/theme-provider";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading, signOut, isAuthenticated } = useAuth();
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const { theme } = useTheme();
 
   const features = [
     {
@@ -94,7 +100,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-1">
               <img
-                src="/icon.png"
+                src={theme === "dark" ? "https://i.postimg.cc/DwVdb9NB/image.png" : "/icon.png"}
                 alt="IdeaVault Icon"
                 className="h-8 w-auto"
               />
@@ -103,6 +109,15 @@ export default function LandingPage() {
               </span>
             </div>
             <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsShortcutsOpen(true)}
+                title="Keyboard shortcuts (Ctrl+/)"
+              >
+                <Keyboard className="h-4 w-4 mr-2" />
+                Shortcuts
+              </Button>
               <ThemeToggle />
               {isAuthenticated ? (
                 <>
@@ -295,6 +310,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcuts
+        isOpen={isShortcutsOpen}
+        onOpenChange={setIsShortcutsOpen}
+      />
     </div>
   );
 }

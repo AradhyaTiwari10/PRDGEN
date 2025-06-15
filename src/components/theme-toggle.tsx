@@ -1,37 +1,82 @@
-import { Moon, Sun } from "lucide-react";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/components/theme-provider";
+import { Moon, Sun } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useTheme } from "@/components/theme-provider"
 
-export function ThemeToggle() {
-  const { setTheme } = useTheme();
+interface ThemeToggleProps {
+  className?: string
+}
+
+export function ThemeToggle({ className }: ThemeToggleProps) {
+  const { theme, setTheme } = useTheme()
+  const isDark = theme === "dark"
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark")
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+    <div
+      className={cn(
+        "flex w-16 h-8 p-1 rounded-full cursor-pointer transition-all duration-300",
+        isDark
+          ? "bg-zinc-950 border border-zinc-800"
+          : "bg-white border border-zinc-200",
+        className
+      )}
+      onClick={toggleTheme}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          toggleTheme()
+        }
+      }}
+    >
+      <div className="flex justify-between items-center w-full">
+        <div
+          className={cn(
+            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
+            isDark
+              ? "transform translate-x-0 bg-zinc-800"
+              : "transform translate-x-8 bg-gray-200"
+          )}
+        >
+          {isDark ? (
+            <Moon
+              className="w-4 h-4 text-white"
+              strokeWidth={1.5}
+            />
+          ) : (
+            <Sun
+              className="w-4 h-4 text-gray-700"
+              strokeWidth={1.5}
+            />
+          )}
+        </div>
+        <div
+          className={cn(
+            "flex justify-center items-center w-6 h-6 rounded-full transition-transform duration-300",
+            isDark
+              ? "bg-transparent"
+              : "transform -translate-x-8"
+          )}
+        >
+          {isDark ? (
+            <Sun
+              className="w-4 h-4 text-gray-500"
+              strokeWidth={1.5}
+            />
+          ) : (
+            <Moon
+              className="w-4 h-4 text-black"
+              strokeWidth={1.5}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -88,7 +88,7 @@ export default function DetailedIdeaPage() {
     // Set new timeout for auto-save (3 seconds after user stops typing)
     autoSaveTimeoutRef.current = setTimeout(() => {
       performSave(content, true); // true indicates auto-save
-    }, 3000);
+    }, 1000);
 
     // Cleanup timeout on unmount
     return () => {
@@ -138,7 +138,7 @@ export default function DetailedIdeaPage() {
                   handleManualSave();
                   navigate(-1);
                 }}
-                className="gap-2"
+                className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -149,7 +149,7 @@ export default function DetailedIdeaPage() {
                 <Badge variant={
                   idea.status === 'new' ? 'default' :
                   idea.status === 'in_progress' ? 'secondary' :
-                  idea.status === 'ready_for_prd' ? 'success' : 'outline'
+                  idea.status === 'ready_for_prd' ? 'secondary' : 'outline'
                 }>
                   {idea.status.replace('_', ' ')}
                 </Badge>
@@ -172,7 +172,7 @@ export default function DetailedIdeaPage() {
 
               <Button
                 onClick={handleManualSave}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2"
                 disabled={isSaving}
                 variant={isAutoSaveEnabled ? "outline" : "default"}
               >

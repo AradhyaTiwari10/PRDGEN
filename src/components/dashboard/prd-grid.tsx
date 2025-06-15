@@ -42,6 +42,11 @@ interface PRDGridProps {
   deletePRD: (id: string) => Promise<void>;
 }
 
+// Helper function to capitalize first letter
+const capitalizeFirst = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1).replace('_', ' ');
+};
+
 export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -136,10 +141,16 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPRDs.map((prd) => (
-            <Card key={prd.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
+            <Card key={prd.id} className="group relative hover:shadow-xl transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border hover:border-primary/20">
+              {/* Hover Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+              {/* Subtle Border Glow */}
+              <div className="absolute inset-0 rounded-lg border border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+              <CardHeader className="relative z-10">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg line-clamp-2">
+                  <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors duration-300">
                     {prd.title}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
@@ -177,32 +188,32 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
                     </AlertDialog>
                   </div>
                 </div>
-                <CardDescription className="line-clamp-3">
+                <CardDescription className="line-clamp-3 group-hover:text-foreground transition-colors duration-300">
                   {prd.original_idea}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
                     {prd.category && (
-                      <Badge variant="secondary" className="text-xs">
-                        {prd.category}
+                      <Badge variant="secondary" className="text-xs group-hover:scale-105 transition-transform duration-300">
+                        {capitalizeFirst(prd.category)}
                       </Badge>
                     )}
                     <Badge
                       variant={prd.status === "final" ? "default" : "outline"}
-                      className="text-xs"
+                      className="text-xs group-hover:scale-105 transition-transform duration-300"
                     >
-                      {prd.status}
+                      {capitalizeFirst(prd.status)}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="h-4 w-4 mr-1" />
+                  <div className="flex items-center text-sm text-gray-500 group-hover:text-foreground transition-colors duration-300">
+                    <Calendar className="h-4 w-4 mr-1 group-hover:text-primary transition-colors duration-300" />
                     {new Date(prd.created_at).toLocaleDateString()}
                   </div>
 
-                  <Button asChild className="w-full">
+                  <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                     <Link to={`/prd/${prd.id}`}>View Prompt</Link>
                   </Button>
                 </div>
