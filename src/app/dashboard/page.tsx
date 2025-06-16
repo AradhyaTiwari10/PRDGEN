@@ -53,6 +53,7 @@ import {
 
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { AnimatedNewIdeaButton } from "@/components/ui/animated-new-idea-button";
+import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 // Helper function to capitalize first letter
 const capitalizeFirst = (str: string) => {
@@ -104,6 +105,19 @@ export default function DashboardPage() {
     is_favorite: false,
     content: "",
   });
+
+  // Global keyboard shortcuts - must be called before any conditional returns
+  useKeyboardShortcuts([
+    commonShortcuts.search(() => setIsQuickSearchOpen(true)),
+    commonShortcuts.newItem(() => setIsCreateDialogOpen(true)),
+    commonShortcuts.escape(() => {
+      if (isQuickSearchOpen) {
+        setIsQuickSearchOpen(false);
+      } else if (isCreateDialogOpen) {
+        setIsCreateDialogOpen(false);
+      }
+    }),
+  ]);
 
   useEffect(() => {
     const checkAuth = async () => {

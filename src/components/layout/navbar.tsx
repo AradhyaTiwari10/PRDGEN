@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
 import { useTheme } from "@/components/theme-provider";
+import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -17,6 +18,11 @@ export function Navbar() {
     await supabase.auth.signOut();
     navigate("/");
   };
+
+  // Global keyboard shortcuts for help
+  useKeyboardShortcuts([
+    commonShortcuts.help(() => setIsShortcutsOpen(true)),
+  ]);
 
   return (
     <header className="bg-background border-b">

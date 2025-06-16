@@ -117,72 +117,8 @@ export function KeyboardShortcuts({
     },
   ]
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const { ctrlKey, metaKey, key, target } = event
-      const isModifierPressed = ctrlKey || metaKey
-      
-      // Don't trigger shortcuts when typing in inputs
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        // Allow Ctrl+A in text inputs
-        if (key === "a" && isModifierPressed) return
-        // Allow Ctrl+S for save
-        if (key === "s" && isModifierPressed) {
-          event.preventDefault()
-          onSave?.()
-          return
-        }
-        // Allow Ctrl+/ for help
-        if (key === "/" && isModifierPressed) {
-          event.preventDefault()
-          setDialogOpen(true)
-          return
-        }
-        return
-      }
-
-      // Handle keyboard shortcuts
-      if (isModifierPressed) {
-        switch (key.toLowerCase()) {
-          case "n":
-            event.preventDefault()
-            onNewIdea?.()
-            break
-          case "k":
-            event.preventDefault()
-            onQuickSearch?.()
-            break
-          case "s":
-            event.preventDefault()
-            onSave?.()
-            break
-          case "f":
-            event.preventDefault()
-            onSearch?.()
-            break
-          case "/":
-            event.preventDefault()
-            setDialogOpen(true)
-            break
-        }
-      } else {
-        switch (key) {
-          case "Escape":
-            // Let components handle their own escape logic
-            break
-          case "?":
-            if (!isModifierPressed) {
-              event.preventDefault()
-              setDialogOpen(true)
-            }
-            break
-        }
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [onNewIdea, onSearch, onSave, onQuickSearch])
+  // Note: Keyboard event handling is now managed by the centralized useKeyboardShortcuts hook
+  // This component only displays the shortcuts dialog
 
   const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
     if (!acc[shortcut.category]) {
@@ -288,28 +224,5 @@ export function KeyboardShortcuts({
   )
 }
 
-// Hook for using keyboard shortcuts in components
-export function useKeyboardShortcuts(shortcuts: Record<string, () => void>) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const { ctrlKey, metaKey, key, target } = event
-      const isModifierPressed = ctrlKey || metaKey
-      
-      // Don't trigger shortcuts when typing in inputs
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        return
-      }
-
-      const shortcutKey = isModifierPressed ? `Ctrl+${key.toLowerCase()}` : key
-      const action = shortcuts[shortcutKey]
-      
-      if (action) {
-        event.preventDefault()
-        action()
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [shortcuts])
-}
+// Note: The useKeyboardShortcuts hook has been moved to @/hooks/use-keyboard-shortcuts
+// This component now focuses only on displaying the keyboard shortcuts dialog
