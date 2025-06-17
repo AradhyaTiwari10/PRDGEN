@@ -6,6 +6,7 @@ import { FileText, LogOut, Keyboard } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
+import { NotificationBell } from "@/components/ui/notification-bell";
 import { useTheme } from "@/components/theme-provider";
 import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
@@ -50,6 +51,7 @@ export function Navbar() {
               <Keyboard className="h-4 w-4 mr-2" />
               Shortcuts
             </Button>
+            <NotificationBell />
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />

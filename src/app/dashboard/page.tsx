@@ -55,6 +55,9 @@ import {
 
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { AnimatedNewIdeaButton } from "@/components/ui/animated-new-idea-button";
+import { CollaborationRequestModal } from "@/components/ui/collaboration-request-modal";
+import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
+import { SharedIdeasGrid } from "@/components/ui/shared-ideas-grid";
 import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 // Helper function to capitalize first letter
@@ -558,7 +561,7 @@ export default function DashboardPage() {
                           {capitalizeFirst(idea.priority)}
                         </span>
                       </div>
-                      <div className="flex justify-center">
+                      <div className="flex flex-col gap-2">
                         <InteractiveHoverButton
                           text="Generate Prompt for AI Tools"
                           variant="outline"
@@ -568,12 +571,59 @@ export default function DashboardPage() {
                           }}
                           className="text-sm px-3 py-2 w-full min-h-[40px] flex items-center justify-center"
                         />
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full flex gap-1"
+                        >
+                          <CollaborationRequestModal
+                            idea={idea}
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-1 text-sm px-2 py-2 min-h-[32px] flex items-center justify-center gap-2"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                </svg>
+                                Invite
+                              </Button>
+                            }
+                          />
+                          <CollaboratorsManagement
+                            idea={idea}
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-1 text-sm px-2 py-2 min-h-[32px] flex items-center justify-center gap-2"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Manage
+                              </Button>
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
                   </div>
+                </div>
+              )
+            },
+            {
+              id: "shared",
+              label: "Shared with Me",
+              icon: <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>,
+              content: (
+                <div className="space-y-4">
+                  <SharedIdeasGrid />
                 </div>
               )
             },
@@ -665,6 +715,8 @@ export default function DashboardPage() {
                   >
                     Close
                   </Button>
+                  <CollaborationRequestModal idea={selectedIdea} />
+                  <CollaboratorsManagement idea={selectedIdea} />
                   <InteractiveHoverButton
                     text="Generate Prompt for AI Tools"
                     variant="default"

@@ -51,6 +51,9 @@ export interface Idea {
   user_id: string;
   created_at: string;
   updated_at: string;
+  // Collaboration properties (optional, added when idea is shared)
+  is_shared?: boolean;
+  permission_level?: 'read' | 'write';
 }
 
 export interface IdeaCollection {
@@ -60,6 +63,33 @@ export interface IdeaCollection {
   description?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface CollaborationRequest {
+  id: string;
+  idea_id: string;
+  requester_id: string;
+  recipient_id: string;
+  requester_email: string;
+  recipient_email: string;
+  status: 'pending' | 'accepted' | 'declined';
+  message?: string;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  idea_title?: string;
+}
+
+export interface SharedIdea {
+  id: string;
+  idea_id: string;
+  owner_id: string;
+  collaborator_id: string;
+  permission_level: 'read' | 'write';
+  created_at: string;
+  // Joined data
+  idea_title?: string;
+  owner_email?: string;
 }
 
 export interface IdeaConversation {

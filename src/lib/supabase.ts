@@ -62,6 +62,53 @@ export type Database = {
           role?: 'user' | 'assistant'
         }
       }
+      collaboration_requests: {
+        Row: {
+          id: string
+          idea_id: string
+          requester_id: string
+          recipient_id: string
+          requester_email: string
+          recipient_email: string
+          status: 'pending' | 'accepted' | 'declined'
+          message: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          idea_id: string
+          requester_id: string
+          recipient_id: string
+          requester_email: string
+          recipient_email: string
+          status?: 'pending' | 'accepted' | 'declined'
+          message?: string | null
+        }
+        Update: {
+          status?: 'pending' | 'accepted' | 'declined'
+          message?: string | null
+          updated_at?: string
+        }
+      }
+      shared_ideas: {
+        Row: {
+          id: string
+          idea_id: string
+          owner_id: string
+          collaborator_id: string
+          permission_level: 'read' | 'write'
+          created_at: string
+        }
+        Insert: {
+          idea_id: string
+          owner_id: string
+          collaborator_id: string
+          permission_level?: 'read' | 'write'
+        }
+        Update: {
+          permission_level?: 'read' | 'write'
+        }
+      }
     }
   }
 }

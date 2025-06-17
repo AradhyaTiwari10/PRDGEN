@@ -12,6 +12,8 @@ import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shor
 import { Idea } from "@/types";
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { CollaborationRequestModal } from "@/components/ui/collaboration-request-modal";
+import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
 
 export default function DetailedIdeaPage() {
   const { id } = useParams<{ id: string }>();
@@ -183,6 +185,9 @@ export default function DetailedIdeaPage() {
                   ) : null}
                 </div>
               )}
+
+              <CollaborationRequestModal idea={idea} />
+              <CollaboratorsManagement idea={idea} />
 
               <Button
                 onClick={handleManualSave}
