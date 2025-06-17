@@ -9,12 +9,14 @@ import {
   Star,
   StarOff,
   Trash2,
+  FileText,
+  Zap,
 } from "lucide-react";
 
 import { usePRDs } from "@/hooks/use-prds";
 import { useIdeas } from "@/hooks/use-ideas";
 import { Navbar } from "@/components/layout/navbar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SimpleAnimatedTabs } from "@/components/ui/simple-animated-tabs";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -270,38 +272,30 @@ export default function DashboardPage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <div className="flex justify-between items-center">
-            <TabsList>
-              <TabsTrigger value="ideas">Ideas</TabsTrigger>
-              <TabsTrigger value="prds">Prompts</TabsTrigger>
-            </TabsList>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
 
-            {activeTab === "prds" ? (
-              <InteractiveHoverButton
-                text="Generate New Prompt"
-                variant="default"
-                onClick={() => navigate("/generate")}
-                className="px-4 py-2"
-              />
-            ) : (
-              <Dialog
-                open={isCreateDialogOpen}
-                onOpenChange={(open) => {
-                  setIsCreateDialogOpen(open);
-                  if (!open) {
-                    // Clear form errors when dialog is closed
-                    setFormErrors({});
-                  }
-                }}
-              >
-                <DialogTrigger asChild>
-                  <AnimatedNewIdeaButton />
-                </DialogTrigger>
+          {activeTab === "prds" ? (
+            <InteractiveHoverButton
+              text="Generate New Prompt"
+              variant="default"
+              onClick={() => navigate("/generate")}
+              className="px-4 py-2"
+            />
+          ) : (
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={(open) => {
+                setIsCreateDialogOpen(open);
+                if (!open) {
+                  // Clear form errors when dialog is closed
+                  setFormErrors({});
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <AnimatedNewIdeaButton />
+              </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
                     <DialogTitle>Create New Idea</DialogTitle>
@@ -463,22 +457,27 @@ export default function DashboardPage() {
                 </DialogContent>
               </Dialog>
             )}
-          </div>
+        </div>
 
-          <TabsContent value="prds" className="space-y-4">
-            <PRDGrid prds={prds} onDelete={refreshPRDs} deletePRD={deletePRD} />
-          </TabsContent>
+        <SimpleAnimatedTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={[
+            {
+              id: "ideas",
+              label: "Ideas",
+              icon: <FileText className="h-4 w-4" />,
+              content: (
+                <div className="space-y-4">
+                  {/* Enhanced Search Component */}
+                  <EnhancedSearch
+                    onFiltersChange={setSearchFilters}
+                    placeholder="Search ideas by title, description, category..."
+                    categories={ideaCategories}
+                    className="mb-6"
+                  />
 
-          <TabsContent value="ideas" className="space-y-4">
-            {/* Enhanced Search Component */}
-            <EnhancedSearch
-              onFiltersChange={setSearchFilters}
-              placeholder="Search ideas by title, description, category..."
-              categories={ideaCategories}
-              className="mb-6"
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredIdeas.map((idea) => (
                 <Card
                   key={idea.id}
@@ -574,9 +573,22 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+                  </div>
+                </div>
+              )
+            },
+            {
+              id: "prds",
+              label: "Prompts",
+              icon: <Zap className="h-4 w-4" />,
+              content: (
+                <div className="space-y-4">
+                  <PRDGrid prds={prds} onDelete={refreshPRDs} deletePRD={deletePRD} />
+                </div>
+              )
+            }
+          ]}
+        />
 
         {/* Idea Detail Dialog */}
         <Dialog

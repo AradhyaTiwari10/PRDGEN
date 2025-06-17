@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Save, ArrowLeft, Bot, FileText, Clock, CheckCircle } from "lucide-react";
 import { useIdeas } from "@/hooks/use-ideas";
+import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { Idea } from "@/types";
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -104,6 +105,19 @@ export default function DetailedIdeaPage() {
       await performSave(content, false); // false indicates manual save (with toast)
     }
   };
+
+  // Keyboard shortcuts for the idea page
+  useKeyboardShortcuts([
+    // Cmd/Ctrl + Shift + S to save (avoids browser save page)
+    commonShortcuts.save(() => {
+      handleManualSave();
+    }),
+    // Escape to go back
+    commonShortcuts.escape(() => {
+      handleManualSave();
+      navigate(-1);
+    }),
+  ]);
 
   if (loading) {
     return (

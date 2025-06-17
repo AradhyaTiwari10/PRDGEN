@@ -10,6 +10,8 @@ import GeneratePage from "@/app/generate/page";
 import PRDPage from "@/pages/prd/PRDPage";
 import DetailedIdeaPage from "@/pages/idea/DetailedIdeaPage";
 import NotFound from "@/pages/NotFound";
+import { NotFound as GhostNotFound } from "@/components/ui/ghost-404-page";
+import TestGhost404 from "@/pages/TestGhost404";
 
 export default function App() {
   return (
@@ -51,6 +53,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/404-demo" element={<GhostNotFound />} />
+          <Route path="/test-404" element={<TestGhost404 />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />

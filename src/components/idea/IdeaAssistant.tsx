@@ -164,9 +164,9 @@ const TypingAnimation = ({ text, onComplete, isWelcome = false }: { text: string
         {displayedText}
       </ReactMarkdown>
 
-      {/* Enhanced cursor with smooth animation */}
+      {/* Enhanced cursor with smooth animation - positioned immediately after text */}
       {isTyping && (
-        <span className="inline-flex items-center ml-1 animate-pulse">
+        <span className="inline-flex items-center animate-pulse">
           <span
             className="w-0.5 h-4 bg-primary rounded-full"
             style={{
@@ -237,9 +237,12 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
     clearConversation,
   } = useIdeaConversations(idea.id, idea);
 
+  // Check if Nexi is currently active (thinking or typing)
+  const isNexiActive = sending || !!typingMessage || !!welcomeTypingMessage;
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || sending) return;
+    if (!message.trim() || isNexiActive) return;
 
     const messageToSend = message.trim();
     setMessage('');
@@ -390,7 +393,9 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
               variant="ghost"
               size="sm"
               onClick={clearConversation}
-              className="text-muted-foreground hover:text-destructive"
+              disabled={isNexiActive}
+              className="text-muted-foreground hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isNexiActive ? "Please wait for Nexi to finish responding" : "Clear conversation"}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -583,28 +588,42 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
         </ScrollArea>
       </div>
 
-      <div className="flex-shrink-0 border-t p-4">
+      <div className={`flex-shrink-0 border-t p-4 transition-opacity duration-200 ${isNexiActive ? 'opacity-75' : ''}`}>
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask about your idea..."
-            disabled={sending}
-            className="flex-1"
+            placeholder={
+              isNexiActive
+                ? "Please wait for Nexi to finish responding..."
+                : "Ask about your idea..."
+            }
+            disabled={isNexiActive}
+            className="flex-1 disabled:cursor-not-allowed"
           />
           <Button
             type="submit"
-            disabled={!message.trim() || sending}
+            disabled={!message.trim() || isNexiActive}
             size="sm"
+            title={isNexiActive ? "Please wait for Nexi to finish responding" : "Send message"}
+            className="disabled:cursor-not-allowed"
           >
-            {sending ? (
+            {isNexiActive ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
             )}
           </Button>
         </form>
+        {isNexiActive && (
+          <div className="flex items-center justify-center mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+              <span>Nexi is {sending ? 'thinking' : 'typing'}...</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

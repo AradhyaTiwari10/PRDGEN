@@ -36,14 +36,17 @@ export function useKeyboardShortcuts(
       for (const shortcut of shortcuts) {
         const keyMatches = event.key.toLowerCase() === shortcut.key.toLowerCase();
 
-        // Handle modifier keys - if both metaKey and ctrlKey are specified,
-        // it means either Cmd (Mac) or Ctrl (Windows/Linux) should work
+        // Handle modifier keys with better cross-platform support
         let modifierMatches = true;
 
-        if (shortcut.metaKey !== undefined || shortcut.ctrlKey !== undefined) {
-          const wantsModifier = shortcut.metaKey || shortcut.ctrlKey;
-          const hasModifier = event.metaKey || event.ctrlKey;
-          modifierMatches = modifierMatches && (wantsModifier === hasModifier);
+        // Handle Ctrl key specifically - only match ctrlKey, not metaKey
+        if (shortcut.ctrlKey !== undefined) {
+          modifierMatches = modifierMatches && (shortcut.ctrlKey === event.ctrlKey);
+        }
+
+        // Handle metaKey separately if specified
+        if (shortcut.metaKey !== undefined) {
+          modifierMatches = modifierMatches && (shortcut.metaKey === event.metaKey);
         }
 
         if (shortcut.shiftKey !== undefined) {
@@ -71,32 +74,33 @@ export function useKeyboardShortcuts(
 
 /**
  * Common keyboard shortcuts that can be reused across components
+ * Updated to avoid conflicts with browser shortcuts
  */
 export const commonShortcuts = {
   /**
-   * Command/Ctrl + K for search
+   * Ctrl + K for search (standard command palette shortcut)
    */
   search: (callback: () => void): KeyboardShortcut => ({
     key: "k",
-    metaKey: true, // This will match either Cmd or Ctrl
+    ctrlKey: true,
     callback: () => callback(),
   }),
 
   /**
-   * Command/Ctrl + N for new item
+   * Ctrl + N for new item (standard new shortcut)
    */
   newItem: (callback: () => void): KeyboardShortcut => ({
     key: "n",
-    metaKey: true, // This will match either Cmd or Ctrl
+    ctrlKey: true,
     callback: () => callback(),
   }),
 
   /**
-   * Command/Ctrl + B for sidebar toggle
+   * Ctrl + B for sidebar toggle (standard sidebar shortcut)
    */
   toggleSidebar: (callback: () => void): KeyboardShortcut => ({
     key: "b",
-    metaKey: true, // This will match either Cmd or Ctrl
+    ctrlKey: true,
     callback: () => callback(),
   }),
 
@@ -109,11 +113,47 @@ export const commonShortcuts = {
   }),
 
   /**
-   * Command/Ctrl + / for help
+   * Ctrl + / for help (standard help shortcut)
    */
   help: (callback: () => void): KeyboardShortcut => ({
     key: "/",
-    metaKey: true, // This will match either Cmd or Ctrl
+    ctrlKey: true,
+    callback: () => callback(),
+  }),
+
+  /**
+   * Ctrl + S for save (standard save shortcut)
+   */
+  save: (callback: () => void): KeyboardShortcut => ({
+    key: "s",
+    ctrlKey: true,
+    callback: () => callback(),
+  }),
+
+  /**
+   * Ctrl + F for focus search (standard find shortcut)
+   */
+  focusSearch: (callback: () => void): KeyboardShortcut => ({
+    key: "f",
+    ctrlKey: true,
+    callback: () => callback(),
+  }),
+
+  /**
+   * Ctrl + 1 for go to home
+   */
+  goHome: (callback: () => void): KeyboardShortcut => ({
+    key: "1",
+    ctrlKey: true,
+    callback: () => callback(),
+  }),
+
+  /**
+   * Ctrl + 2 for go to dashboard
+   */
+  goDashboard: (callback: () => void): KeyboardShortcut => ({
+    key: "2",
+    ctrlKey: true,
     callback: () => callback(),
   }),
 };
