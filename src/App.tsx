@@ -13,7 +13,7 @@ import NotFound from "@/pages/NotFound";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="prd-genie-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="prd-genie-theme">
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />

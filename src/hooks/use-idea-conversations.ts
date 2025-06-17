@@ -173,13 +173,11 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
+
       setConversations([]);
-      
-      // Reinitialize with welcome message
-      if (idea) {
-        await initializeConversation();
-      }
+
+      // Don't reinitialize here - let the component handle it with typing animation
+      // The useEffect in IdeaAssistant will handle reinitialization
 
       toast({
         title: 'Success',
@@ -200,11 +198,8 @@ export function useIdeaConversations(ideaId: string, idea?: Idea) {
     }
   }, [ideaId]);
 
-  useEffect(() => {
-    if (!loading && conversations.length === 0 && idea) {
-      initializeConversation();
-    }
-  }, [loading, conversations.length, idea]);
+  // Note: Initialization is now handled by the component with typing animation
+  // This prevents duplicate welcome messages
 
   return {
     conversations,

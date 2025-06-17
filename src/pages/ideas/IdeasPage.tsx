@@ -140,7 +140,7 @@ export default function IdeasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       {/* Main Content */}
@@ -354,7 +354,7 @@ export default function IdeasPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 mb-4">{idea.description}</p>
+                <p className="text-muted-foreground mb-4">{idea.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${

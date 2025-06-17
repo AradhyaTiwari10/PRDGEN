@@ -267,6 +267,14 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
     }
   };
 
+  // Reset initialization state when conversations are cleared
+  useEffect(() => {
+    if (conversations.length === 0) {
+      setIsInitialized(false);
+      setWelcomeTypingMessage(null);
+    }
+  }, [conversations.length]);
+
   // Initialize conversation with typing effect
   useEffect(() => {
     if (!loading && conversations.length === 0 && idea && !isInitialized && !welcomeTypingMessage) {
