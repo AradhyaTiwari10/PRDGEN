@@ -59,6 +59,7 @@ import { CollaborationRequestModal } from "@/components/ui/collaboration-request
 import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
 import { SharedIdeasGrid } from "@/components/ui/shared-ideas-grid";
 import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { NotificationHistory } from "@/components/ui/notification-history";
 
 // Helper function to capitalize first letter
 const capitalizeFirst = (str: string) => {
@@ -82,6 +83,33 @@ export default function DashboardPage() {
   } = useIdeas();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ideas");
+
+  // Check URL parameters for tab selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam && ['ideas', 'shared', 'notifications', 'prds'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, []);
+
+  // Listen for URL changes (for when navigating from notification dropdown)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam && ['ideas', 'shared', 'notifications', 'prds'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    };
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleLocationChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
+  }, []);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     query: "",
     status: "all",
@@ -552,7 +580,7 @@ export default function DashboardPage() {
                         {idea.description}
                       </p>
                     </div>
-                    <div className="mt-auto space-y-3">
+                    <div className="mt-auto space-y-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
                           {capitalizeFirst(idea.status)}
@@ -560,20 +588,28 @@ export default function DashboardPage() {
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary group-hover:bg-primary/20 group-hover:scale-105 transition-all duration-300">
                           {capitalizeFirst(idea.priority)}
                         </span>
+                        {idea.is_shared && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 group-hover:bg-blue-200 group-hover:scale-105 transition-all duration-300">
+                            <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            Shared ({idea.permission_level})
+                          </span>
+                        )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-4 mt-6">
                         <InteractiveHoverButton
-                          text="Generate Prompt for AI Tools"
+                          text="Generate PRD for AI Tools"
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleGeneratePRD(idea);
                           }}
-                          className="text-sm px-3 py-2 w-full min-h-[40px] flex items-center justify-center"
+                          className="text-sm px-4 py-3 w-full min-h-[44px] flex items-center justify-center font-medium"
                         />
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full flex gap-1"
+                          className="w-full flex gap-3"
                         >
                           <CollaborationRequestModal
                             idea={idea}
@@ -581,7 +617,7 @@ export default function DashboardPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="flex-1 text-sm px-2 py-2 min-h-[32px] flex items-center justify-center gap-2"
+                                className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium"
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -596,7 +632,7 @@ export default function DashboardPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="flex-1 text-sm px-2 py-2 min-h-[32px] flex items-center justify-center gap-2"
+                                className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium"
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -628,8 +664,20 @@ export default function DashboardPage() {
               )
             },
             {
+              id: "notifications",
+              label: "Notifications",
+              icon: <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 19H6.5a2.5 2.5 0 010-5H11m0 5v-5m0 5h5m-5-5V9a3 3 0 116 0v5m-6 0h6" />
+              </svg>,
+              content: (
+                <div className="space-y-4">
+                  <NotificationHistory />
+                </div>
+              )
+            },
+            {
               id: "prds",
-              label: "Prompts",
+              label: "PRDs",
               icon: <Zap className="h-4 w-4" />,
               content: (
                 <div className="space-y-4">
@@ -708,20 +756,21 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                   <Button
                     variant="outline"
                     onClick={() => setSelectedIdea(null)}
+                    className="px-4 py-2.5 min-h-[40px] font-medium"
                   >
                     Close
                   </Button>
                   <CollaborationRequestModal idea={selectedIdea} />
                   <CollaboratorsManagement idea={selectedIdea} />
                   <InteractiveHoverButton
-                    text="Generate Prompt for AI Tools"
+                    text="Generate PRD for AI Tools"
                     variant="default"
                     onClick={() => handleGeneratePRD(selectedIdea)}
-                    className="px-4 py-2 text-sm flex items-center justify-center"
+                    className="px-4 py-2.5 min-h-[40px] text-sm flex items-center justify-center font-medium"
                   />
                 </div>
               </div>

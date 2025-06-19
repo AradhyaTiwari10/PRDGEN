@@ -42,11 +42,13 @@ import { useEffect } from "react";
 interface RichTextEditorProps {
   content?: string;
   onChange?: (content: string) => void;
+  readOnly?: boolean;
 }
 
 export function RichTextEditor({
   content = "",
   onChange,
+  readOnly = false,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -92,12 +94,15 @@ export function RichTextEditor({
       }),
     ],
     content,
+    editable: !readOnly,
     onUpdate: ({ editor }) => {
-      onChange?.(editor.getHTML());
+      if (!readOnly) {
+        onChange?.(editor.getHTML());
+      }
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+        class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none ${readOnly ? 'cursor-default' : ''}`,
       },
     },
   });
@@ -122,8 +127,9 @@ export function RichTextEditor({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Compact Toolbar with Better Layout */}
-      <div className="border-b bg-card flex-shrink-0">
+      {/* Compact Toolbar with Better Layout - Hidden in read-only mode */}
+      {!readOnly && (
+        <div className="border-b bg-card flex-shrink-0">
         <div className="p-2 flex gap-1 items-center overflow-x-auto">
           {/* Basic Formatting Group */}
           <div className="flex gap-1 items-center">
@@ -342,6 +348,17 @@ export function RichTextEditor({
           </div>
         </div>
       </div>
+      )}
+
+      {/* Read-only indicator */}
+      {readOnly && (
+        <div className="bg-muted/50 border-b px-4 py-2 text-sm text-muted-foreground flex items-center gap-2">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Read-only mode - You have view-only access to this idea
+        </div>
+      )}
 
       {/* Enhanced Editor Content with Custom Styling */}
       <div className="flex-1 min-h-0 overflow-hidden bg-card">

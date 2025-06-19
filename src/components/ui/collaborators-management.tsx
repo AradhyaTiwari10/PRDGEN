@@ -106,7 +106,7 @@ export function CollaboratorsManagement({ idea, trigger }: CollaboratorsManageme
     }
   };
 
-  const handleUpdatePermission = async (collaboratorId: string, newPermission: 'read' | 'write') => {
+  const handleUpdatePermission = async (collaboratorId: string, newPermission: 'view' | 'edit' | 'manage') => {
     try {
       await updateCollaboratorPermission(collaboratorId, newPermission);
     } catch (error) {
@@ -122,17 +122,30 @@ export function CollaboratorsManagement({ idea, trigger }: CollaboratorsManageme
   );
 
   const getPermissionBadge = (permission: string) => {
-    return permission === 'write' ? (
-      <Badge variant="default" className="gap-1">
-        <Edit className="h-3 w-3" />
-        Write
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="gap-1">
-        <Eye className="h-3 w-3" />
-        Read
-      </Badge>
-    );
+    switch (permission) {
+      case 'manage':
+        return (
+          <Badge variant="default" className="gap-1">
+            <Users className="h-3 w-3" />
+            Manage
+          </Badge>
+        );
+      case 'edit':
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Edit className="h-3 w-3" />
+            Edit
+          </Badge>
+        );
+      case 'view':
+      default:
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Eye className="h-3 w-3" />
+            View
+          </Badge>
+        );
+    }
   };
 
   return (
@@ -224,16 +237,17 @@ export function CollaboratorsManagement({ idea, trigger }: CollaboratorsManageme
                           <div className="flex items-center gap-1">
                             <Select
                               value={collaborator.permission_level}
-                              onValueChange={(value: 'read' | 'write') =>
+                              onValueChange={(value: 'view' | 'edit' | 'manage') =>
                                 handleUpdatePermission(collaborator.collaborator_id, value)
                               }
                             >
-                              <SelectTrigger className="w-20 h-8">
+                              <SelectTrigger className="w-32 h-8">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="read">Read</SelectItem>
-                                <SelectItem value="write">Write</SelectItem>
+                                <SelectItem value="view">View Only</SelectItem>
+                                <SelectItem value="edit">Can Edit</SelectItem>
+                                <SelectItem value="manage">Can Edit + Invite</SelectItem>
                               </SelectContent>
                             </Select>
 

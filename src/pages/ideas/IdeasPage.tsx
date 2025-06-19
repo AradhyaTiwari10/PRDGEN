@@ -265,14 +265,20 @@ export default function IdeasPage() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-4">
+              <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
+                  className="px-4 py-2.5 min-h-[40px] font-medium"
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateIdea}>Create Idea</Button>
+                <Button
+                  onClick={handleCreateIdea}
+                  className="px-4 py-2.5 min-h-[40px] font-medium"
+                >
+                  Create Idea
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -394,8 +400,8 @@ export default function IdeasPage() {
                   </p>
                 )}
               </CardContent>
-              <CardFooter className="mt-auto flex justify-end">
-                <div className="flex justify-end gap-2">
+              <CardFooter className="mt-auto flex justify-end pt-6">
+                <div className="flex justify-end gap-3 w-full">
                   <Button
                     variant="outline"
                     size="sm"
@@ -403,9 +409,10 @@ export default function IdeasPage() {
                       e.stopPropagation();
                       navigate(`/idea/${idea.id}`);
                     }}
+                    className="px-4 py-2.5 min-h-[40px] font-medium"
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    View Prompt
+                    View PRD
                   </Button>
                 </div>
               </CardFooter>

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { generatePRD } from '@/lib/gemini'
+import { generatePRD } from '@/lib/deepseek'
 import { prdGenerationSchema } from '@/lib/validations'
 import { Database } from '@/lib/supabase'
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = prdGenerationSchema.parse(body)
     
-    // Generate PRD using Gemini
+    // Generate PRD using Deepseek
     const generatedContent = await generatePRD(
       validatedData.idea,
       validatedData.category,

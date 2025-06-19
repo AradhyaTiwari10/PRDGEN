@@ -126,24 +126,31 @@ export function useIdeas() {
       }
 
       // If it's a shared idea, check write permission
-      if (currentIdea.is_shared && currentIdea.permission_level !== 'write') {
-        throw new Error('You do not have write permission for this idea');
+      if (currentIdea.is_shared && currentIdea.permission_level === 'view') {
+        throw new Error('You do not have edit permission for this idea');
       }
 
-      // If it's a shared idea, don't check user_id (owner check)
-      const query = supabase
+      // Build the query
+      let query = supabase
         .from('ideas')
         .update(updates)
         .eq('id', id);
 
       // Only add user_id check if it's not a shared idea
       if (!currentIdea.is_shared) {
-        query.eq('user_id', user.id);
+        query = query.eq('user_id', user.id);
       }
 
-      const { data, error } = await query.select().single();
+      // Use maybeSingle() instead of single() to handle cases where no rows are updated
+      const { data, error } = await query.select().maybeSingle();
 
       if (error) throw error;
+
+      // If no data returned, it means the update didn't affect any rows
+      if (!data) {
+        throw new Error('Failed to update idea - no rows affected');
+      }
+
       setIdeas(prev => prev.map(idea => idea.id === id ? { ...data, is_shared: idea.is_shared, permission_level: idea.permission_level } : idea));
       toast({
         title: 'Success',

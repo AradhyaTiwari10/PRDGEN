@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
+import { CollaborationRequestModal } from "@/components/ui/collaboration-request-modal";
 import { 
   Users, 
   Eye, 
@@ -21,7 +22,7 @@ import { Idea } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 
 interface SharedIdeaWithDetails extends Idea {
-  permission_level: 'read' | 'write';
+  permission_level: 'view' | 'edit' | 'manage';
   shared_at: string;
   owner_email: string;
 }
@@ -115,17 +116,30 @@ export function SharedIdeasGrid() {
   };
 
   const getPermissionBadge = (permission: string) => {
-    return permission === 'write' ? (
-      <Badge variant="default" className="gap-1">
-        <Edit className="h-3 w-3" />
-        Write
-      </Badge>
-    ) : (
-      <Badge variant="secondary" className="gap-1">
-        <Eye className="h-3 w-3" />
-        Read
-      </Badge>
-    );
+    switch (permission) {
+      case 'manage':
+        return (
+          <Badge variant="default" className="gap-1">
+            <Users className="h-3 w-3" />
+            Manage
+          </Badge>
+        );
+      case 'edit':
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Edit className="h-3 w-3" />
+            Edit
+          </Badge>
+        );
+      case 'view':
+      default:
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Eye className="h-3 w-3" />
+            View
+          </Badge>
+        );
+    }
   };
 
   const capitalizeFirst = (str: string) => {
@@ -219,7 +233,7 @@ export function SharedIdeasGrid() {
                 </span>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-4">
                 <Button
                   variant="outline"
                   size="sm"
@@ -227,30 +241,67 @@ export function SharedIdeasGrid() {
                     e.stopPropagation();
                     navigate(`/idea/${idea.id}`);
                   }}
-                  className="w-full gap-2"
+                  className="w-full gap-2 px-4 py-2.5 min-h-[40px] font-medium"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Open Idea
                 </Button>
 
-                <div 
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full"
-                >
-                  <CollaboratorsManagement 
-                    idea={idea}
-                    trigger={
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-full text-sm px-3 py-2 min-h-[32px] flex items-center justify-center gap-2"
-                      >
-                        <Users className="h-4 w-4" />
-                        View Collaborators
-                      </Button>
-                    }
-                  />
-                </div>
+                {/* Show different buttons based on permission level */}
+                {idea.permission_level === 'view' ? (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full"
+                  >
+                    <CollaboratorsManagement
+                      idea={idea}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium"
+                        >
+                          <Users className="h-4 w-4" />
+                          View Collaborators
+                        </Button>
+                      }
+                    />
+                  </div>
+                ) : (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full flex gap-3"
+                  >
+                    <CollaborationRequestModal
+                      idea={idea}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                          </svg>
+                          Invite
+                        </Button>
+                      }
+                    />
+                    <CollaboratorsManagement
+                      idea={idea}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium"
+                        >
+                          <Users className="h-4 w-4" />
+                          Manage
+                        </Button>
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

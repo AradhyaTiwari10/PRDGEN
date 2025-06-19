@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { useNotifications } from './use-notifications';
 
 export interface CollaborationRequest {
   id: string;
@@ -9,6 +10,7 @@ export interface CollaborationRequest {
   recipient_id: string;
   recipient_email: string;
   status: 'pending' | 'accepted' | 'declined';
+  permission_level?: 'view' | 'edit' | 'manage';
   message?: string;
   created_at: string;
   updated_at: string;
@@ -22,7 +24,7 @@ export interface SharedIdea {
   idea_id: string;
   owner_id: string;
   collaborator_id: string;
-  permission_level: 'read' | 'write';
+  permission_level: 'view' | 'edit' | 'manage';
   created_at: string;
   // Joined data
   idea_title?: string;
@@ -35,6 +37,7 @@ export function useCollaboration() {
   const [sharedIdeas, setSharedIdeas] = useState<SharedIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { createNotification } = useNotifications();
 
   // Fetch pending collaboration requests (received)
   const fetchPendingRequests = async () => {
@@ -214,7 +217,7 @@ export function useCollaboration() {
   };
 
   // Send collaboration request with enhanced validation
-  const sendCollaborationRequest = async (ideaId: string, recipientEmail: string, message?: string) => {
+  const sendCollaborationRequest = async (ideaId: string, recipientEmail: string, message?: string, permissionLevel: 'view' | 'edit' | 'manage' = 'view') => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -337,10 +340,25 @@ export function useCollaboration() {
           requester_email: user.email || 'Unknown',
           recipient_email: recipientEmail,
           message: enhancedMessage,
+          permission_level: permissionLevel,
           status: 'pending'
         });
 
       if (insertError) throw insertError;
+
+      // Send notification to recipient
+      try {
+        await createNotification(
+          recipientId,
+          'collaboration_invited',
+          'New Collaboration Invitation',
+          `${user.email} invited you to collaborate on "${ideaData.title}" with ${permissionLevel} access`,
+          { idea_id: ideaId, idea_title: ideaData.title, permission_level: permissionLevel }
+        );
+      } catch (notificationError) {
+        console.error('Failed to send notification:', notificationError);
+        // Don't fail the whole operation if notification fails
+      }
 
       toast({
         title: 'Invitation Sent!',
@@ -362,7 +380,7 @@ export function useCollaboration() {
   };
 
   // Accept collaboration request with enhanced backend access
-  const acceptCollaborationRequest = async (requestId: string, permissionLevel: 'read' | 'write' = 'read') => {
+  const acceptCollaborationRequest = async (requestId: string, permissionLevel: 'view' | 'edit' | 'manage' = 'view') => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -508,6 +526,19 @@ export function useCollaboration() {
           .eq('id', requestId);
 
         throw new Error('Failed to create collaboration access. Please try again.');
+      }
+
+      // Send notification to the requester
+      try {
+        await createNotification(
+          request.requester_id,
+          'collaboration_accepted',
+          'Collaboration Request Accepted',
+          `${user.email} accepted your collaboration request for "${ideaTitle}"`,
+          { idea_id: request.idea_id, idea_title: ideaTitle }
+        );
+      } catch (notificationError) {
+        console.error('Failed to send acceptance notification:', notificationError);
       }
 
       toast({

@@ -213,8 +213,8 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
                     {new Date(prd.created_at).toLocaleDateString()}
                   </div>
 
-                  <Button asChild className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                    <Link to={`/prd/${prd.id}`}>View Prompt</Link>
+                  <Button asChild className="w-full px-4 py-2.5 min-h-[40px] font-medium group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                    <Link to={`/prd/${prd.id}`}>View PRD</Link>
                   </Button>
                 </div>
               </CardContent>

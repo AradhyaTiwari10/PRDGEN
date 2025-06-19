@@ -13,7 +13,7 @@ export function usePRDs() {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
       if (userError) throw userError
-      if (!user) throw new Error('You must be logged in to view Prompts')
+      if (!user) throw new Error('You must be logged in to view PRDs')
 
       const { data, error: fetchError } = await supabase
         .from('prds')

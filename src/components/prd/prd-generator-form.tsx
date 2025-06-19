@@ -133,42 +133,49 @@ Generate a PRD so comprehensive that a developer could build the entire applicat
 
 Format in clean Markdown with clear hierarchical structure.`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${
-        import.meta.env.VITE_GEMINI_API_KEY
-      }`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 8192,
+    const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('Deepseek API key not configured');
+    }
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek/deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'Generate a detailed, implementation-ready PRD structured with comprehensive sections. Each section must be specific and actionable for developers/AI coding assistants, with technical detail, concrete examples, and clear specifications.'
           },
-        }),
-      }
-    );
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 8192,
+        top_p: 0.95,
+        stream: false
+      }),
+    });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || "Failed to generate PRD content");
+      const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+      throw new Error(error.error?.message || `Deepseek API error: ${response.status}`);
     }
 
     const result = await response.json();
-    return result.candidates[0].content.parts[0].text;
+
+    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+      throw new Error('Invalid response format from Deepseek API');
+    }
+
+    return result.choices[0].message.content;
   };
 
   const onSubmit = async (data: PRDGenerationData) => {

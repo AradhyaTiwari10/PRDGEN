@@ -15,6 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCollaboration } from "@/hooks/use-collaboration";
 import { Idea } from "@/types";
 
@@ -28,6 +35,7 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [permission, setPermission] = useState<'view' | 'edit' | 'manage'>('view');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
 
@@ -59,7 +67,7 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
     setEmailError(""); // Clear any previous errors
 
     try {
-      await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined);
+      await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined, permission);
 
       // Reset form and close modal on success
       setEmail("");
@@ -73,7 +81,7 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
         try {
           await cleanupCollaborationData(idea.id, email.trim());
           // Retry the request after cleanup
-          await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined);
+          await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined, permission);
 
           // Reset form and close modal on success
           setEmail("");
@@ -88,7 +96,7 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
         try {
           await cleanupCollaborationData(idea.id, email.trim());
           // Retry the request after cleanup
-          await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined);
+          await sendCollaborationRequest(idea.id, email.trim(), message.trim() || undefined, permission);
 
           // Reset form and close modal on success
           setEmail("");
@@ -165,7 +173,89 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
               The user must have an account with this email address.
             </p>
           </div>
-          
+
+          <div className="space-y-2">
+            <Label htmlFor="collaboration-permission">
+              Permission Level
+            </Label>
+            <Select value={permission} onValueChange={(value: 'view' | 'edit' | 'manage') => setPermission(value)}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Select permission level">
+                  {permission === 'view' && (
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <div className="text-left">
+                        <div className="font-medium">View Only</div>
+                        <div className="text-xs text-muted-foreground">Can view the idea but not edit</div>
+                      </div>
+                    </div>
+                  )}
+                  {permission === 'edit' && (
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <div className="text-left">
+                        <div className="font-medium">Can Edit</div>
+                        <div className="text-xs text-muted-foreground">Can view and edit the idea</div>
+                      </div>
+                    </div>
+                  )}
+                  {permission === 'manage' && (
+                    <div className="flex items-center gap-2">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <div className="text-left">
+                        <div className="font-medium">Can Edit + Invite</div>
+                        <div className="text-xs text-muted-foreground">Can edit and invite others</div>
+                      </div>
+                    </div>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="w-full">
+                <SelectItem value="view" className="py-3">
+                  <div className="flex items-center gap-3 w-full">
+                    <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <div className="flex-1">
+                      <div className="font-medium">View Only</div>
+                      <div className="text-xs text-muted-foreground">Can view the idea but not edit</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="edit" className="py-3">
+                  <div className="flex items-center gap-3 w-full">
+                    <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <div className="flex-1">
+                      <div className="font-medium">Can Edit</div>
+                      <div className="text-xs text-muted-foreground">Can view and edit the idea</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="manage" className="py-3">
+                  <div className="flex items-center gap-3 w-full">
+                    <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <div className="flex-1">
+                      <div className="font-medium">Can Edit + Invite</div>
+                      <div className="text-xs text-muted-foreground">Can edit and invite others</div>
+                    </div>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="collaboration-message">
               Message (Optional)

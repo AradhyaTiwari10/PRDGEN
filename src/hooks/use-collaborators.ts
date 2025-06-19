@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { useNotifications } from './use-notifications';
 
 export interface CollaboratorDetails {
   id: string;
@@ -8,7 +9,7 @@ export interface CollaboratorDetails {
   owner_id: string;
   collaborator_id: string;
   collaborator_email: string;
-  permission_level: 'read' | 'write';
+  permission_level: 'view' | 'edit' | 'manage';
   created_at: string;
   // Additional fields
   idea_title?: string;
@@ -19,6 +20,7 @@ export function useCollaborators(ideaId?: string) {
   const [collaborators, setCollaborators] = useState<CollaboratorDetails[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { createNotification } = useNotifications();
 
   // Fetch collaborators for a specific idea
   const fetchCollaborators = async (targetIdeaId?: string) => {
@@ -86,6 +88,16 @@ export function useCollaborators(ideaId?: string) {
 
       const currentIdeaId = targetIdeaId || ideaId;
 
+      // Get idea title and collaborator email for notification
+      const { data: ideaData } = await supabase
+        .from('ideas')
+        .select('title')
+        .eq('id', currentIdeaId)
+        .single();
+
+      const { data: collaboratorData } = await supabase
+        .rpc('get_user_by_email_reverse', { user_id: collaboratorId });
+
       // Step 1: Remove from shared_ideas table
       const { error: sharedError } = await supabase
         .from('shared_ideas')
@@ -108,9 +120,22 @@ export function useCollaborators(ideaId?: string) {
         console.warn('Failed to clean up collaboration request:', requestError);
       }
 
+      // Step 3: Send notification to removed collaborator
+      try {
+        await createNotification(
+          collaboratorId,
+          'collaboration_removed',
+          'Removed from Collaboration',
+          `You have been removed from collaboration on "${ideaData?.title || 'an idea'}" by ${user.email}`,
+          { idea_id: currentIdeaId, idea_title: ideaData?.title }
+        );
+      } catch (notificationError) {
+        console.error('Failed to send removal notification:', notificationError);
+      }
+
       toast({
         title: 'Success',
-        description: 'Collaborator removed successfully',
+        description: `${collaboratorData || 'Collaborator'} removed successfully`,
       });
 
       // Refresh the list
@@ -129,21 +154,43 @@ export function useCollaborators(ideaId?: string) {
 
   // Update collaborator permission
   const updateCollaboratorPermission = async (
-    collaboratorId: string, 
-    newPermission: 'read' | 'write',
+    collaboratorId: string,
+    newPermission: 'view' | 'edit' | 'manage',
     targetIdeaId?: string
   ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const currentIdeaId = targetIdeaId || ideaId;
+
+      // Get idea title for notification
+      const { data: ideaData } = await supabase
+        .from('ideas')
+        .select('title')
+        .eq('id', currentIdeaId)
+        .single();
+
       const { error } = await supabase
         .from('shared_ideas')
         .update({ permission_level: newPermission })
-        .eq('idea_id', targetIdeaId || ideaId)
+        .eq('idea_id', currentIdeaId)
         .eq('collaborator_id', collaboratorId);
 
       if (error) throw error;
+
+      // Send notification about permission change
+      try {
+        await createNotification(
+          collaboratorId,
+          'permission_changed',
+          'Permission Updated',
+          `Your permission for "${ideaData?.title || 'an idea'}" has been updated to ${newPermission} by ${user.email}`,
+          { idea_id: currentIdeaId, idea_title: ideaData?.title, new_permission: newPermission }
+        );
+      } catch (notificationError) {
+        console.error('Failed to send permission change notification:', notificationError);
+      }
 
       toast({
         title: 'Success',

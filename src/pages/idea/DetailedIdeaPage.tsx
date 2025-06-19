@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { QuillCollaborativeEditor } from "@/components/editor/QuillCollaborativeEditor";
 import { IdeaAssistant } from "@/components/idea/IdeaAssistant";
+import { CollaborationDebug } from "@/components/debug/CollaborationDebug";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +19,7 @@ import { CollaboratorsManagement } from "@/components/ui/collaborators-managemen
 export default function DetailedIdeaPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { ideas, updateIdea, loading } = useIdeas();
+  const { ideas, updateIdea, loading, refreshIdeas } = useIdeas();
   const idea = ideas.find((idea) => idea.id === id);
   const [content, setContent] = useState("");
   const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(true);
@@ -45,18 +46,40 @@ export default function DetailedIdeaPage() {
     setIsSaving(true);
     try {
       if (isAutoSave) {
-        // Direct Supabase call without toast for auto-save
+        // For auto-save, use direct Supabase call without toast but with proper permission handling
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
-        const { error } = await supabase
+        // Check if user owns the idea or has edit permission
+        const currentIdea = ideas.find(idea => idea.id === id);
+        if (!currentIdea) {
+          throw new Error('Idea not found');
+        }
+
+        // If it's a shared idea, check edit permission
+        if (currentIdea.is_shared && currentIdea.permission_level === 'view') {
+          throw new Error('You do not have edit permission for this idea');
+        }
+
+        // Build the query with proper permission handling
+        let query = supabase
           .from('ideas')
           .update({ content: contentToSave })
           .eq('id', id);
 
+        // Only add user_id check if it's not a shared idea
+        if (!currentIdea.is_shared) {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query.select().maybeSingle();
         if (error) throw error;
+        if (!data) throw new Error('Failed to update idea - no rows affected');
+
+        // Refresh ideas to get updated data without showing toast
+        await refreshIdeas();
       } else {
-        // Manual save with toast
+        // For manual save, use updateIdea which shows toast
         await updateIdea(id, { content: contentToSave });
       }
 
@@ -65,10 +88,12 @@ export default function DetailedIdeaPage() {
       initialContentRef.current = contentToSave;
     } catch (error) {
       console.error("Save failed:", error);
+      // For auto-save, we don't want to show error toasts to avoid spam
+      // The error will be logged and the user can manually save if needed
     } finally {
       setIsSaving(false);
     }
-  }, [id, updateIdea]);
+  }, [id, updateIdea, ideas, refreshIdeas]);
 
   // Track content changes and mark as unsaved
   useEffect(() => {
@@ -236,7 +261,12 @@ export default function DetailedIdeaPage() {
                 </div>
               </div>
               <div className="flex-1 min-h-0 overflow-hidden">
-                <RichTextEditor content={content} onChange={setContent} />
+                <QuillCollaborativeEditor
+                  content={content}
+                  onChange={setContent}
+                  readOnly={idea?.is_shared && idea?.permission_level === 'view'}
+                  ideaId={id!}
+                />
               </div>
             </div>
           </ResizablePanel>
@@ -255,6 +285,9 @@ export default function DetailedIdeaPage() {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
+
+        {/* Debug component - remove in production */}
+        <CollaborationDebug ideaId={id!} />
       </div>
     </div>
   );

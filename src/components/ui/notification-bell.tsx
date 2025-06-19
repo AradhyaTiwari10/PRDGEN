@@ -43,7 +43,7 @@ export function NotificationBell() {
     try {
       console.log('NotificationBell: Accepting request with ID:', requestId);
       console.log('NotificationBell: Selected request:', selectedRequest);
-      await acceptCollaborationRequest(requestId, 'read');
+      await acceptCollaborationRequest(requestId, 'view');
       setIsDialogOpen(false);
       setSelectedRequest(null);
     } catch (error) {
