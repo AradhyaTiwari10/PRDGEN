@@ -179,7 +179,7 @@ export function QuillCollaborativeEditor({
   useEffect(() => {
     if (!editorRef.current) return;
 
-    console.log('🔧 Initializing Quill editor with Yjs collaboration');
+
 
     // Create Yjs document and WebSocket provider
     const ydoc = new Y.Doc();
@@ -196,12 +196,10 @@ export function QuillCollaborativeEditor({
 
     // Handle connection status
     provider.on('status', (event: { status: string }) => {
-      console.log('WebSocket status:', event.status);
       setIsConnected(event.status === 'connected');
     });
 
     provider.on('sync', (isSynced: boolean) => {
-      console.log('Yjs sync status:', isSynced);
       setIsSyncing(!isSynced);
     });
 
@@ -218,31 +216,57 @@ export function QuillCollaborativeEditor({
         ] : false,
         cursors: {
           transformOnTextChange: true,
-        }
+          autoRegisterListener: false,
+          hideDelayMs: 5000,
+          hideSpeedMs: 0,
+          selectionChangeSource: null,
+          template: '<span class="ql-cursor-flag">{{name}}</span><span class="ql-cursor-caret"></span>',
+          positionFlag: (cursor: any, flag: HTMLElement) => {
+            // Position the cursor flag above the cursor
+            flag.style.top = '-28px';
+            flag.style.left = '0px';
+          }
+        },
+        history: false
       }
     });
 
     quillRef.current = quill;
 
-    // Create Yjs binding
+    // Create Yjs binding with awareness for collaborative cursors
     const binding = new QuillBinding(ytext, quill, provider.awareness);
     bindingRef.current = binding;
 
-    // Set initial content if provided
-    if (content && ytext.length === 0) {
-      quill.clipboard.dangerouslyPasteHTML(content);
+    // Update local user info in awareness
+    if (currentUser) {
+      provider.awareness.setLocalStateField('user', {
+        name: currentUser.name,
+        color: '#3b82f6', // Blue color for current user
+        id: currentUser.id
+      });
     }
 
-    // Handle text changes
+    // Set initial content if provided - let Yjs handle it naturally
+    if (content && ytext.length === 0) {
+      // Convert HTML to plain text to avoid cursor positioning issues
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = content;
+      const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+      if (plainText.trim()) {
+        ytext.insert(0, plainText);
+      }
+    }
+
+    // Handle text changes - only for local updates, Yjs handles sync
     quill.on('text-change', (delta, oldDelta, source) => {
       if (source === 'user') {
         const newContent = quill.root.innerHTML;
-        console.log('📝 Quill: Content changed locally');
         onChange?.(newContent);
 
         // Broadcast typing status
         broadcastTypingStatus(true);
-        
+
         // Clear existing typing timeout
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current);
@@ -252,63 +276,19 @@ export function QuillCollaborativeEditor({
         typingTimeoutRef.current = setTimeout(() => {
           broadcastTypingStatus(false);
         }, 1000);
-
-        // Broadcast content change
-        const selection = quill.getSelection();
-        const cursor = selection ? selection.index : 0;
-        broadcastContentChange(newContent, cursor);
       }
     });
 
-    // Handle selection changes for cursor updates
-    quill.on('selection-change', (range, oldRange, source) => {
-      if (source === 'user' && range) {
-        broadcastCursorUpdate(range.index, range.index, range.index + range.length);
-      }
-    });
+    // Handle selection changes for cursor updates - let QuillBinding handle this
+    // The QuillBinding automatically manages cursor awareness
 
     // Cleanup function
     return () => {
-      console.log('🧹 Cleaning up Quill editor');
-      binding.destroy();
-      provider.destroy();
-      ydoc.destroy();
+      if (binding) binding.destroy();
+      if (provider) provider.destroy();
+      if (ydoc) ydoc.destroy();
     };
   }, [ideaId, readOnly]);
-
-  // Handle collaborator cursors
-  useEffect(() => {
-    if (!quillRef.current || !providerRef.current) return;
-
-    const quill = quillRef.current;
-    const cursors = quill.getModule('cursors');
-
-    // Update cursors when collaborators change
-    collaborators.forEach((collaborator) => {
-      if (typeof collaborator.cursor_position === 'number') {
-        cursors.createCursor(
-          collaborator.user_id,
-          collaborator.user_name,
-          collaborator.color
-        );
-        cursors.moveCursor(
-          collaborator.user_id,
-          {
-            index: collaborator.cursor_position,
-            length: 0
-          }
-        );
-      }
-    });
-
-    // Remove cursors for collaborators who left
-    const currentCollaboratorIds = collaborators.map(c => c.user_id);
-    cursors.cursors().forEach((cursor: any) => {
-      if (!currentCollaboratorIds.includes(cursor.id)) {
-        cursors.removeCursor(cursor.id);
-      }
-    });
-  }, [collaborators]);
 
   return (
     <div className="h-full flex flex-col">

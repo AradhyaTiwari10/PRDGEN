@@ -13,19 +13,21 @@ import * as Y from 'yjs';
 const server = http.createServer();
 const wss = new WebSocketServer({ server });
 
-// Store documents in memory (for production, use persistent storage)
+// Store documents and room connections in memory
 const docs = new Map();
+const rooms = new Map(); // Map of roomName -> Set of WebSocket connections
 
 console.log('🚀 Starting WebSocket server for Yjs collaboration...');
 
 wss.on('connection', (ws, req) => {
-  console.log('📡 New WebSocket connection established');
-
-  // Extract room name from URL
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const roomName = url.searchParams.get('room') || 'default-room';
+  // Extract room name from URL path (y-websocket sends room name as path)
+  const urlPath = req.url || '/';
+  const roomName = urlPath.substring(1) || 'default-room'; // Remove leading slash
 
   console.log(`🏠 Client joined room: ${roomName}`);
+
+  // Store room name on the WebSocket connection
+  ws.roomName = roomName;
 
   // Get or create document for this room
   if (!docs.has(roomName)) {
@@ -33,28 +35,45 @@ wss.on('connection', (ws, req) => {
     console.log(`📄 Created new document for room: ${roomName}`);
   }
 
+  // Add connection to room
+  if (!rooms.has(roomName)) {
+    rooms.set(roomName, new Set());
+  }
+  rooms.get(roomName).add(ws);
+
   const doc = docs.get(roomName);
 
-  // Handle incoming messages
+  // Handle incoming messages - only forward to clients in the same room
   ws.on('message', (message) => {
     try {
-      // Forward message to all other clients in the same room
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send(message);
-        }
-      });
+      const roomConnections = rooms.get(roomName);
+      if (roomConnections) {
+        roomConnections.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(message);
+          }
+        });
+      }
     } catch (error) {
-      console.error('❌ Error handling message:', error);
+      console.error(`❌ Error handling message in room ${roomName}:`, error);
     }
   });
 
   ws.on('close', () => {
-    console.log('📡 WebSocket connection closed');
+    // Remove connection from room
+    const roomConnections = rooms.get(roomName);
+    if (roomConnections) {
+      roomConnections.delete(ws);
+      if (roomConnections.size === 0) {
+        rooms.delete(roomName);
+        console.log(`🗑️ Room ${roomName} is now empty`);
+      }
+    }
+    console.log(`📡 Client left room: ${roomName}`);
   });
 
   ws.on('error', (error) => {
-    console.error('❌ WebSocket error:', error);
+    console.error(`❌ WebSocket error in room ${roomName}:`, error);
   });
 });
 
