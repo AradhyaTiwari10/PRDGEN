@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QuillCollaborativeEditor } from "@/components/editor/QuillCollaborativeEditor";
 import { IdeaAssistant } from "@/components/idea/IdeaAssistant";
-import { CollaborationDebug } from "@/components/debug/CollaborationDebug";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -228,7 +228,7 @@ export default function DetailedIdeaPage() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 container mx-auto px-4 py-4">
+      <div className="flex-1 min-h-0 px-4 py-4">
         <ResizablePanelGroup direction="horizontal" className="h-full rounded-lg border bg-background">
           <ResizablePanel defaultSize={60} minSize={40}>
             <div className="h-full flex flex-col bg-card">
@@ -286,8 +286,7 @@ export default function DetailedIdeaPage() {
           </ResizablePanel>
         </ResizablePanelGroup>
 
-        {/* Debug component - remove in production */}
-        <CollaborationDebug ideaId={id!} />
+
       </div>
     </div>
   );

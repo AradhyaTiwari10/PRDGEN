@@ -111,7 +111,6 @@ export function CollaborationRequestModal({ idea, trigger }: CollaborationReques
         setEmailError(error.message);
       }
       // Other errors are already handled in the hook with toast
-      console.error('Failed to send collaboration request:', error);
     } finally {
       setIsLoading(false);
     }

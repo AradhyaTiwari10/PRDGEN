@@ -24,7 +24,7 @@ wss.on('connection', (ws, req) => {
   const urlPath = req.url || '/';
   const roomName = urlPath.substring(1) || 'default-room'; // Remove leading slash
 
-  console.log(`🏠 Client joined room: ${roomName}`);
+  // Client joined room: ${roomName}
 
   // Store room name on the WebSocket connection
   ws.roomName = roomName;
@@ -32,7 +32,7 @@ wss.on('connection', (ws, req) => {
   // Get or create document for this room
   if (!docs.has(roomName)) {
     docs.set(roomName, new Y.Doc());
-    console.log(`📄 Created new document for room: ${roomName}`);
+    // Created new document for room: ${roomName}
   }
 
   // Add connection to room
@@ -66,10 +66,10 @@ wss.on('connection', (ws, req) => {
       roomConnections.delete(ws);
       if (roomConnections.size === 0) {
         rooms.delete(roomName);
-        console.log(`🗑️ Room ${roomName} is now empty`);
+        // Room ${roomName} is now empty
       }
     }
-    console.log(`📡 Client left room: ${roomName}`);
+    // Client left room: ${roomName}
   });
 
   ws.on('error', (error) => {

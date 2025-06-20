@@ -217,7 +217,6 @@ export function useRealtimeCollaboration(ideaId: string) {
     });
 
     return () => {
-      console.log('🔌 Unsubscribing from collaboration channel');
       channel.unsubscribe();
       setIsConnected(false);
       setCollaborators([]);
@@ -227,12 +226,10 @@ export function useRealtimeCollaboration(ideaId: string) {
   // Broadcast content changes with debouncing
   const broadcastContentChange = useCallback((content: string, cursorPosition?: number) => {
     if (!channelRef.current || !currentUser) {
-      console.log('🔧 Cannot broadcast - missing channel or user');
       return;
     }
 
     if (isUpdatingFromRemoteRef.current) {
-      console.log('🔧 Skipping broadcast - updating from remote');
       return;
     }
 
@@ -248,23 +245,14 @@ export function useRealtimeCollaboration(ideaId: string) {
         cursor_position: cursorPosition
       };
 
-      console.log('📤 Broadcasting content change:', {
-        contentLength: content.length,
-        cursorPosition,
-        userEmail: currentUser.email,
-        timestamp: changePayload.timestamp
-      });
-
       try {
-        const result = channelRef.current.send({
+        channelRef.current.send({
           type: 'broadcast',
           event: 'content-change',
           payload: changePayload
         });
-
-        console.log('✅ Content change broadcasted successfully', result);
       } catch (error) {
-        console.error('❌ Failed to broadcast content change:', error);
+        console.error('Failed to broadcast content change:', error);
       }
     } else {
       console.log('🔧 Content unchanged, skipping broadcast');
@@ -289,8 +277,6 @@ export function useRealtimeCollaboration(ideaId: string) {
         online_at: new Date().toISOString(),
         is_typing: false // Reset typing when cursor moves
       };
-
-      console.log('🖱️ Broadcasting cursor update:', presenceData);
 
       // Update presence with cursor position
       channelRef.current.track(presenceData);
@@ -328,8 +314,6 @@ export function useRealtimeCollaboration(ideaId: string) {
         online_at: new Date().toISOString(),
       };
 
-      console.log('⌨️ Broadcasting typing status:', { isTyping, user: currentUser.name });
-
       // Update presence with typing status
       channelRef.current.track(presenceData);
 
@@ -343,7 +327,7 @@ export function useRealtimeCollaboration(ideaId: string) {
         }
       });
     } catch (error) {
-      console.error('❌ Failed to broadcast typing status:', error);
+      console.error('Failed to broadcast typing status:', error);
     }
   }, [currentUser]);
 

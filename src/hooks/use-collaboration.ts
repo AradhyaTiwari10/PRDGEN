@@ -705,7 +705,7 @@ export function useCollaboration() {
         .eq('recipient_id', recipientId)
         .eq('status', 'declined');
 
-      console.log('Cleaned up inconsistent collaboration data');
+      // Cleaned up inconsistent collaboration data
     } catch (error) {
       console.error('Failed to cleanup collaboration data:', error);
     }
