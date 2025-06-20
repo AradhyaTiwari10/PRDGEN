@@ -8,13 +8,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Zap, Users, Download, Shield, Rocket } from "lucide-react";
+import {
+  FileText,
+  Zap,
+  Users,
+  Download,
+  Shield,
+  Rocket,
+  Star,
+  CheckCircle,
+  ArrowRight,
+  Play,
+  Clock,
+  TrendingUp,
+  Award
+} from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Fixed, full-screen gradient overlays for background */}
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none z-[-1]"></div>
+      <div className="fixed inset-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none z-[-1]"></div>
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
+      <header className="bg-background/80 backdrop-blur-sm border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText className="h-8 w-8 text-blue-600" />
@@ -231,11 +248,6 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/pricing" className="hover:text-white">
-                    Pricing
-                  </Link>
-                </li>
-                <li>
                   <Link to="/demo" className="hover:text-white">
                     Demo
                   </Link>
@@ -291,6 +303,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Force Tailwind to include animate-shine class */}
+      <div className="hidden animate-shine"></div>
     </div>
   );
 }

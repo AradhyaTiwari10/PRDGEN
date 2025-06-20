@@ -86,7 +86,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md bg-[#0f0f11]/60 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl">
+
       <CardHeader>
         <CardTitle className="text-foreground">
           {mode === "login" ? "Welcome Back" : "Create Account"}
@@ -104,6 +105,8 @@ export function AuthForm({ mode }: AuthFormProps) {
               Email
             </Label>
             <Input
+            className="bg-[#0f0f11] border border-white/10 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-white/20 focus:border-white/20 rounded-xl"
+
               id="email"
               type="email"
               placeholder="you@example.com"
@@ -119,6 +122,8 @@ export function AuthForm({ mode }: AuthFormProps) {
               Password
             </Label>
             <Input
+            className="bg-[#0f0f11] border border-white/10 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-white/20 focus:border-white/20 rounded-xl"
+
               id="password"
               type="password"
               placeholder="••••••••"

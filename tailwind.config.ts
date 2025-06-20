@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -150,7 +151,15 @@ export default {
 						opacity: '0.8',
 						transform: 'scale(1.1)'
 					}
-				}
+				},
+				'gradient': {
+					'0%, 100%': { backgroundPosition: '0% 50%' },
+					'50%': { backgroundPosition: '100% 50%' },
+				},
+				'shine': {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -162,9 +171,11 @@ export default {
 				'pulse-bar': 'pulse-bar 1.5s ease-in-out infinite',
 				'pulse-bar-delay': 'pulse-bar-short 1.5s ease-in-out 0.2s infinite',
 				'pulse-bar-delay2': 'pulse-bar 1.5s ease-in-out 0.4s infinite',
-				'glow': 'glow 2s ease-in-out infinite'
+				'glow': 'glow 2s ease-in-out infinite',
+				'gradient': 'gradient 8s ease infinite',
+				'shine': 'shine 2.5s linear infinite',
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [animate],
 } satisfies Config;
