@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthDebug } from "@/components/auth/auth-debug";
 import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/app/login/page";
 import SignupPage from "@/app/signup/page";
@@ -53,6 +54,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/auth-debug" element={<div className="min-h-screen bg-background p-8"><AuthDebug /></div>} />
           <Route path="/404-demo" element={<GhostNotFound />} />
           <Route path="/test-404" element={<TestGhost404 />} />
           <Route path="*" element={<NotFound />} />

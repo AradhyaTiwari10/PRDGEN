@@ -133,34 +133,17 @@ Generate a PRD so comprehensive that a developer could build the entire applicat
 
 Format in clean Markdown with clear hierarchical structure.`;
 
-    const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
+    // API key is now handled server-side for security
 
-    if (!apiKey) {
-      throw new Error('Deepseek API key not configured');
-    }
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('/api/generate-prd-deepseek', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'deepseek/deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: 'Generate a detailed, implementation-ready PRD structured with comprehensive sections. Each section must be specific and actionable for developers/AI coding assistants, with technical detail, concrete examples, and clear specifications.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 8192,
-        top_p: 0.95,
-        stream: false
+        idea,
+        category,
+        targetAudience
       }),
     });
 
@@ -171,11 +154,11 @@ Format in clean Markdown with clear hierarchical structure.`;
 
     const result = await response.json();
 
-    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
-      throw new Error('Invalid response format from Deepseek API');
+    if (!result.prd) {
+      throw new Error('No PRD content received');
     }
 
-    return result.choices[0].message.content;
+    return result.prd;
   };
 
   const onSubmit = async (data: PRDGenerationData) => {

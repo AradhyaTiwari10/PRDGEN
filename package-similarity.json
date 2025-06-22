@@ -1,0 +1,33 @@
+{
+  "name": "startup-ideas-similarity-search",
+  "version": "1.0.0",
+  "description": "Vector similarity search for startup ideas using DeepSeek embeddings and pgvector",
+  "type": "module",
+  "main": "similarity-search.js",
+  "scripts": {
+    "generate-embeddings": "node generate-embeddings.js",
+    "test-similarity": "node -e \"import('./similarity-search.js').then(m => m.testSimilaritySearch?.())\"",
+    "get-stats": "node -e \"import('./similarity-search.js').then(m => m.getSimilaritySearchStats().then(console.log))\"",
+    "search": "node -e \"const query = process.argv[1]; import('./similarity-search.js').then(m => m.findSimilarStartupIdeas(query, 5).then(console.log))\"",
+    "install-deps": "npm install @supabase/supabase-js axios dotenv"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  },
+  "keywords": [
+    "vector-search",
+    "embeddings",
+    "similarity",
+    "startup-ideas",
+    "deepseek",
+    "supabase",
+    "pgvector"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+} 

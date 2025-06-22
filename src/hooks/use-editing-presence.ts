@@ -99,8 +99,9 @@ export function useEditingPresence(ideaId: string) {
 
     fetchActiveEditors();
 
-    const subscription = supabase
-      .channel(`editing-sessions-${ideaId}`)
+    const channelName = `editing-sessions-${ideaId}-${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -116,7 +117,7 @@ export function useEditingPresence(ideaId: string) {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [ideaId, fetchActiveEditors]);
 

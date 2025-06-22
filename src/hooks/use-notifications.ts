@@ -143,36 +143,47 @@ export function useNotifications() {
 
   // Set up real-time subscription
   useEffect(() => {
+    let subscription: any = null;
+    let isMounted = true;
+
     const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !isMounted) return;
 
-      const subscription = supabase
-        .channel('notifications')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          () => {
-            fetchNotifications();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
+        // Create a unique channel name to avoid conflicts
+        const channelName = `notifications-${user.id}-${Date.now()}`;
+        
+        subscription = supabase
+          .channel(channelName)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${user.id}`,
+            },
+            () => {
+              if (isMounted) {
+                fetchNotifications();
+              }
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        console.error('Failed to setup notifications subscription:', error);
+      }
     };
 
     fetchNotifications();
-    const cleanupPromise = setupSubscription();
+    setupSubscription();
 
     return () => {
-      cleanupPromise.then(cleanup => cleanup?.());
+      isMounted = false;
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
     };
   }, []);
 

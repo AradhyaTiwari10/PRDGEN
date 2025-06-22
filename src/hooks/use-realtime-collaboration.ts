@@ -77,9 +77,17 @@ export function useRealtimeCollaboration(ideaId: string) {
       return;
     }
 
+    // Cleanup any existing channel first
+    if (channelRef.current) {
+      console.log('🧹 Cleaning up existing channel');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
     console.log('🚀 Setting up collaboration channel for idea:', ideaId);
 
-    const channelName = `idea-collaboration-${ideaId}`;
+    // Use timestamp to ensure unique channel names
+    const channelName = `idea-collaboration-${ideaId}-${Date.now()}`;
     const channel = supabase.channel(channelName);
 
     channelRef.current = channel;
@@ -217,7 +225,11 @@ export function useRealtimeCollaboration(ideaId: string) {
     });
 
     return () => {
-      channel.unsubscribe();
+      console.log('🧹 Cleaning up collaboration channel');
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
       setIsConnected(false);
       setCollaborators([]);
     };

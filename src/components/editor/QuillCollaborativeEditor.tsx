@@ -58,21 +58,34 @@ export function QuillCollaborativeEditor({
     ydocRef.current = ydoc;
 
     // Create WebSocket provider for real-time collaboration
-    const provider = new WebsocketProvider(
-      'ws://localhost:1234', // WebSocket server URL
-      `idea-${ideaId}`, // Room name
-      ydoc
-    );
-    providerRef.current = provider;
+    // Only connect if WebSocket server is available
+    let provider: any = null;
+    try {
+      provider = new WebsocketProvider(
+        'ws://localhost:1234', // WebSocket server URL
+        `idea-${ideaId}`, // Room name
+        ydoc
+      );
+      providerRef.current = provider;
 
-    // Handle connection status
-    provider.on('status', (event: { status: string }) => {
-      setIsConnected(event.status === 'connected');
-    });
+      // Handle connection status
+      provider.on('status', (event: { status: string }) => {
+        setIsConnected(event.status === 'connected');
+      });
 
-    provider.on('sync', (isSynced: boolean) => {
-      setIsSyncing(!isSynced);
-    });
+      provider.on('sync', (isSynced: boolean) => {
+        setIsSyncing(!isSynced);
+      });
+
+      // Handle connection errors gracefully
+      provider.on('connection-error', () => {
+        console.warn('WebSocket collaboration server not available');
+        setIsConnected(false);
+      });
+    } catch (error) {
+      console.warn('Failed to initialize WebSocket provider:', error);
+      setIsConnected(false);
+    }
 
     // Configure Quill with advanced Magic Write-style toolbar
     const quill = new Quill(editorRef.current, {
@@ -114,7 +127,7 @@ export function QuillCollaborativeEditor({
     quillRef.current = quill;
 
     // Create Yjs binding with awareness for collaborative cursors
-    const binding = new QuillBinding(ytext, quill, provider.awareness);
+    const binding = new QuillBinding(ytext, quill, provider?.awareness);
     bindingRef.current = binding;
 
     // Get cursors module for manual cursor management
@@ -142,7 +155,7 @@ export function QuillCollaborativeEditor({
     };
 
     // Update local user info in awareness
-    if (currentUser) {
+    if (currentUser && provider?.awareness) {
       provider.awareness.setLocalStateField('user', {
         name: currentUser.name,
         color: getUserColor(currentUser.id),
@@ -152,6 +165,7 @@ export function QuillCollaborativeEditor({
 
     // Handle awareness changes to show/hide cursors and track active users
     const updateCursors = () => {
+      if (!provider?.awareness) return;
       const states = provider.awareness.getStates();
       const currentCursors = new Set();
       const users: Array<{id: string, name: string, color: string}> = [];
@@ -199,11 +213,13 @@ export function QuillCollaborativeEditor({
     };
 
     // Listen for awareness changes
-    provider.awareness.on('change', updateCursors);
+    if (provider?.awareness) {
+      provider.awareness.on('change', updateCursors);
+    }
 
     // Update cursors when selection changes
     quill.on('selection-change', (range, oldRange, source) => {
-      if (source === 'user' && range) {
+      if (source === 'user' && range && provider?.awareness) {
         provider.awareness.setLocalStateField('cursor', {
           anchor: range.index,
           head: range.index + range.length

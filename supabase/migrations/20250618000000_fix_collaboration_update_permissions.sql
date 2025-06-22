@@ -2,8 +2,15 @@
 -- This fixes the issue where User B cannot save edits to shared ideas
 
 -- Update any remaining 'write' permissions to 'edit' (if any exist)
-UPDATE shared_ideas SET permission_level = 'edit' WHERE permission_level = 'write';
-UPDATE shared_ideas SET permission_level = 'view' WHERE permission_level = 'read';
+-- First check if shared_ideas table exists
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'shared_ideas') THEN
+        UPDATE shared_ideas SET permission_level = 'edit' WHERE permission_level = 'write';
+        UPDATE shared_ideas SET permission_level = 'view' WHERE permission_level = 'read';
+    END IF;
+END
+$$;
 
 -- Drop the existing UPDATE policy for ideas that might check for 'write' permission
 DROP POLICY IF EXISTS "Collaborators can update shared ideas with write permission" ON ideas;
