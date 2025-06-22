@@ -175,24 +175,32 @@ export default function DetailedIdeaPage() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={30} minSize={25}>
-            <div className="h-full flex flex-col bg-card rounded-lg shadow-sm">
+            <div className="h-full bg-card rounded-lg shadow-sm overflow-hidden">
               <Tabs defaultValue="assistant" className="h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 m-3 mb-0">
-                  <TabsTrigger value="assistant" className="flex items-center gap-1">
-                    <Bot className="h-3 w-3" />
-                    AI Assistant
-                  </TabsTrigger>
-                  <TabsTrigger value="similarity" className="flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    Similar Ideas
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="assistant" className="flex-1 min-h-0 overflow-hidden mt-0">
-                  <IdeaAssistant idea={idea} />
-                </TabsContent>
-                <TabsContent value="similarity" className="flex-1 min-h-0 overflow-hidden mt-0 p-3">
-                  <SimilaritySearch currentIdea={idea} />
-                </TabsContent>
+                <div className="flex-shrink-0 p-3 pb-0">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="assistant" className="flex items-center gap-2 text-sm">
+                      <Bot className="h-4 w-4" />
+                      AI Assistant
+                    </TabsTrigger>
+                    <TabsTrigger value="similarity" className="flex items-center gap-2 text-sm">
+                      <Sparkles className="h-4 w-4" />
+                      Similar Ideas
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <TabsContent value="assistant" className="h-full m-0 p-0 data-[state=active]:block data-[state=inactive]:hidden">
+                    <div className="h-full overflow-hidden">
+                      <IdeaAssistant idea={idea} />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="similarity" className="h-full m-0 p-0 data-[state=active]:block data-[state=inactive]:hidden">
+                    <div className="h-full overflow-auto p-3">
+                      <SimilaritySearch currentIdea={idea} />
+                    </div>
+                  </TabsContent>
+                </div>
               </Tabs>
             </div>
           </ResizablePanel>
