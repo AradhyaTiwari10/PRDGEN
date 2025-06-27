@@ -33,10 +33,10 @@ export function SimpleAnimatedTabs({ tabs, activeTab, onTabChange, className }: 
     <div className={cn("w-full", className)}>
       {/* Tab List */}
       <div className="relative">
-        <div className="flex rounded-lg bg-muted p-1 relative">
+        <div className="flex rounded-lg bg-[#5A827E] border border-[#84AE92] p-1 relative">
           {/* Animated background indicator */}
-          <motion.div
-            className="absolute top-1 bottom-1 bg-background rounded-md shadow-sm border"
+                      <motion.div
+              className="absolute top-1 bottom-1 bg-[#B9D4AA] rounded-md shadow-sm border border-[#FAFFCA]"
             animate={indicatorStyle}
             transition={{
               type: "spring",
@@ -55,10 +55,10 @@ export function SimpleAnimatedTabs({ tabs, activeTab, onTabChange, className }: 
               className={cn(
                 "relative z-10 flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-md",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                "hover:text-foreground",
+                "hover:text-white",
                 activeTab === tab.id
-                  ? "text-foreground"
-                  : "text-muted-foreground"
+                  ? "text-[#1C1C1C] font-semibold"
+                  : "text-white"
               )}
             >
               <motion.div

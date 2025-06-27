@@ -262,12 +262,7 @@ export function QuickSearch({
             onChange={(e) => setQuery(e.target.value)}
             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
           />
-          <div className="flex items-center gap-1 ml-3">
-            <kbd className="px-2 py-1 text-xs bg-muted border rounded flex items-center gap-1">
-              <Command className="h-3 w-3" />
-              <span>K</span>
-            </kbd>
-          </div>
+
         </div>
 
         <div className="max-h-96 overflow-y-auto">

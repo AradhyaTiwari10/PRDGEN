@@ -33,6 +33,10 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Capture prompt parameter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const promptParam = urlParams.get('prompt');
+
   const {
     register,
     handleSubmit,
@@ -70,7 +74,12 @@ export function AuthForm({ mode }: AuthFormProps) {
           description: "You have been successfully logged in.",
         });
 
-        navigate("/dashboard");
+        // Navigate to dashboard with prompt parameter if it exists
+        if (promptParam) {
+          navigate(`/dashboard?prompt=${encodeURIComponent(promptParam)}`);
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
       const errorMessage =

@@ -1,75 +1,217 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Search, 
   Sparkles, 
   Clock, 
   TrendingUp, 
   ExternalLink,
   Lightbulb,
-  Target,
-  Zap,
   Loader2,
   Brain,
+  BarChart3,
+  Filter,
   Database,
-  ArrowRight,
-  Star,
-  Users,
-  BarChart3
+  RefreshCw,
+  Search,
+  Target,
+  Code,
+  Eye
 } from 'lucide-react';
 import { useSimilaritySearch, SimilarIdea } from '@/hooks/use-similarity-search';
 import { Idea } from '@/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SimilaritySearchProps {
   currentIdea: Idea;
 }
 
-export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [useCurrentIdea, setUseCurrentIdea] = useState(true);
-  const { searchSimilarIdeas, isSearching, results, error, clearResults } = useSimilaritySearch();
-  const [searchLimit, setSearchLimit] = useState("10");
-  const [minSimilarity, setMinSimilarity] = useState("0.1");
+// Debug state interface
+interface DebugInfo {
+  cleanTitle: string;
+  finalQuery: string;
+  searchComponents: string[];
+  coreProblem: string;
+}
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
+  const { 
+    searchSimilarIdeas, 
+    isSearching, 
+    results, 
+    error, 
+    clearResults, 
+    loadSavedResults,
+    savedResults 
+  } = useSimilaritySearch();
+
+  const [hasLoadedSaved, setHasLoadedSaved] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // Load saved results when component mounts
+  useEffect(() => {
+    if (currentIdea.id && !hasLoadedSaved) {
+      loadSavedResults(currentIdea.id);
+      setHasLoadedSaved(true);
+    }
+  }, [currentIdea.id, loadSavedResults, hasLoadedSaved]);
+
+  const extractCoreProblem = (title: string, description: string) => {
+    // Focus on the main value proposition and problem being solved
+    const text = `${title} ${description}`.toLowerCase();
     
-    await searchSimilarIdeas(
-      searchQuery, 
-      parseInt(searchLimit),
-      parseFloat(minSimilarity)
-    );
+    // Remove all generic platform/tech terms that create noise
+    const cleanText = text
+      .replace(/\b(platform|app|tool|system|solution|service|website|saas|software|technology|ai|ml|smart|intelligent|advanced|api|dashboard|interface|ui|ux|mobile|web|digital|online|cloud|database|server|analytics|integration|automation|optimization|framework|library|plugin|extension|widget|component|module|microservice|backend|frontend|fullstack|responsive|scalable|secure|reliable|efficient|user-friendly|intuitive|modern|cutting-edge|state-of-the-art|innovative|revolutionary|disruptive|next-generation|enterprise|professional|premium|pro|plus|beta|alpha|version|update|upgrade|feature|function|capability|ability|performance|quality|experience|interface|design|layout|theme|style|customization|personalization|configuration|setup|installation|deployment|launch|release|publish|subscribe|membership|account|profile|user|users|customer|customers|client|clients|business|businesses|company|companies|organization|organizations|team|teams|individual|individuals|people|person|everyone|anyone|somebody|someone)\b/g, ' ')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Extract core problem indicators - what pain point does this solve?
+    const problemPatterns = [
+      // Direct problem statements
+      /(?:solves?|addresses?|fixes?|eliminates?|reduces?|prevents?|avoids?|overcomes?|tackles?)\s+([^.!?]*)/gi,
+      // Pain point descriptions
+      /(?:struggle|difficulty|challenge|problem|issue|pain|frustration|inefficiency|bottleneck|limitation|constraint|obstacle|barrier|hurdle|gap)\s+(?:with|in|of|around|regarding)\s+([^.!?]*)/gi,
+      // Need/want statements
+      /(?:need|want|require|demand|seek|looking for|searching for)\s+(?:to|a|an)?\s*([^.!?]*)/gi,
+      // Improvement statements
+      /(?:improve|enhance|optimize|streamline|simplify|automate|better|easier|faster|cheaper|more efficient)\s+([^.!?]*)/gi,
+      // Lack/missing statements
+      /(?:lack|missing|without|no|don't have|doesn't exist|isn't available)\s+([^.!?]*)/gi
+    ];
+    
+    let problemConcepts = [];
+    
+    for (const pattern of problemPatterns) {
+      const matches = text.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1]) {
+          problemConcepts.push(match[1].trim());
+        }
+      }
+    }
+    
+    // If no direct problem statements found, extract domain-specific terms
+    if (problemConcepts.length === 0) {
+      // Focus on the core domain/industry terms that matter
+      const domainTerms = [
+        // Core business domains
+        'music', 'streaming', 'audio', 'songs', 'tracks', 'albums', 'playlists', 'radio',
+        'calendar', 'scheduling', 'appointments', 'events', 'meetings', 'booking',
+        'fitness', 'health', 'exercise', 'workout', 'training', 'nutrition', 'wellness',
+        'education', 'learning', 'teaching', 'courses', 'lessons', 'training', 'certification',
+        'finance', 'banking', 'payments', 'money', 'transactions', 'investing', 'budgeting',
+        'travel', 'booking', 'hotels', 'flights', 'trips', 'vacation', 'destinations',
+        'shopping', 'ecommerce', 'retail', 'products', 'marketplace', 'buying', 'selling',
+        'social', 'networking', 'communication', 'messaging', 'chat', 'community', 'sharing',
+        'productivity', 'tasks', 'projects', 'workflow', 'collaboration', 'management',
+        'content', 'media', 'video', 'photos', 'documents', 'files', 'storage',
+        'delivery', 'logistics', 'transportation', 'shipping', 'tracking',
+        'review', 'rating', 'feedback', 'recommendations', 'discovery',
+        'job', 'career', 'hiring', 'recruitment', 'freelance', 'gig', 'remote',
+        'food', 'restaurant', 'dining', 'recipes', 'cooking', 'nutrition',
+        'real estate', 'property', 'housing', 'rental', 'buying', 'selling',
+        'gaming', 'entertainment', 'fun', 'leisure', 'hobbies',
+        'news', 'information', 'updates', 'notifications', 'alerts'
+      ];
+      
+      const foundDomains = domainTerms.filter(term => 
+        text.includes(term) && 
+        !text.includes(`${term} platform`) && 
+        !text.includes(`${term} app`) &&
+        !text.includes(`${term} tool`)
+      );
+      
+      problemConcepts = foundDomains.slice(0, 3);
+    }
+    
+    // Extract the most meaningful terms (not generic platform terms)
+    const meaningfulTerms = cleanText
+      .split(' ')
+      .filter(word => 
+        word.length > 3 && 
+        !['that', 'this', 'with', 'from', 'they', 'them', 'their', 'have', 'will', 'can', 'are', 'and', 'for', 'the', 'you', 'your', 'all', 'any', 'our', 'use', 'get', 'new', 'more', 'like', 'work', 'make', 'take', 'give', 'help', 'find', 'see', 'know', 'way', 'time', 'day', 'life', 'home', 'world'].includes(word)
+      )
+      .slice(0, 5);
+    
+    return [...problemConcepts, ...meaningfulTerms]
+      .filter(Boolean)
+      .slice(0, 5)
+      .join(' ')
+      .trim();
   };
 
   const handleSearchCurrentIdea = async () => {
-    const query = `${currentIdea.title} ${currentIdea.description}`;
+    const title = currentIdea.title || '';
+    const description = currentIdea.description || '';
+    const category = currentIdea.category || '';
+    
+    let finalQuery = '';
+    let debugData: any = {};
+    
+    // Core Problem Mode - Focus on the main problem/value proposition
+    const coreProblem = extractCoreProblem(title, description);
+    
+    // Build focused query
+    const queryComponents = [
+      coreProblem,
+      category.toLowerCase()
+    ].filter(Boolean);
+    
+    finalQuery = queryComponents.join(' ').trim();
+    
+    // Fallback if empty
+    if (!finalQuery || finalQuery.length < 3) {
+      finalQuery = title.toLowerCase()
+        .replace(/\b(platform|app|tool|system|solution|service|website)\b/gi, '')
+        .trim() || 'startup idea';
+    }
+    
+    debugData = {
+      cleanTitle: title,
+      finalQuery,
+      searchComponents: queryComponents,
+      coreProblem
+    };
+    
+    // Store debug information
+    setDebugInfo(debugData);
+    
+    console.log('🔍 Search query:', finalQuery);
+    console.log('🎯 Search mode:', 'core-problem');
+    console.log('📊 Debug data:', debugData);
+    
     await searchSimilarIdeas(
-      query, 
-      parseInt(searchLimit),
-      parseFloat(minSimilarity)
+      finalQuery, 
+      currentIdea.id,
+      25, // Increased to 25 results for better variety
+      0.3 // Lowered to 30% for more matches while maintaining quality
     );
   };
 
+  const handleRefreshSearch = async () => {
+    clearResults();
+    setHasLoadedSaved(false);
+    await handleSearchCurrentIdea();
+  };
+
   const getSimilarityColor = (similarity: number) => {
-    if (similarity >= 0.8) return 'text-green-600 bg-green-50 border-green-200';
-    if (similarity >= 0.6) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    if (similarity >= 0.4) return 'text-orange-600 bg-orange-50 border-orange-200';
-    if (similarity >= 0.2) return 'text-red-600 bg-red-50 border-red-200';
-    return 'text-gray-600 bg-gray-50 border-gray-200';
+    if (similarity >= 0.7) return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800';
+    if (similarity >= 0.6) return 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/30 dark:border-green-800';
+    if (similarity >= 0.5) return 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/30 dark:border-blue-800';
+    if (similarity >= 0.4) return 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-800';
+    return 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-300 dark:bg-orange-950/30 dark:border-orange-800';
   };
 
   const getSimilarityLabel = (similarity: number) => {
-    if (similarity >= 0.8) return 'Excellent';
+    if (similarity >= 0.7) return 'Excellent Match';
     if (similarity >= 0.6) return 'Very Similar';
-    if (similarity >= 0.4) return 'Similar';
-    if (similarity >= 0.2) return 'Related';
-    return 'Different';
+    if (similarity >= 0.5) return 'Similar';
+    if (similarity >= 0.4) return 'Related';
+    return 'Somewhat Related';
   };
 
   const formatUpvotes = (upvotes: number) => {
@@ -82,294 +224,320 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
     
     // Handle stringified array format like "['https://example.com']"
     if (websites.includes('[') && websites.includes(']')) {
-      // Extract content between brackets
       const match = websites.match(/\['([^']+)'\]/);
       if (match) {
-        return match[1]; // Return the URL without brackets and quotes
+        return match[1];
       }
     }
     
     // Handle comma-separated format
     const firstUrl = websites.split(',')[0];
-    
-    // Remove brackets and quotes if present
     return firstUrl.replace(/[\[\]'",]/g, '').trim();
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Sparkles className="h-5 w-5" />
-          Find Similar Startup Ideas
-        </CardTitle>
-        <CardDescription>
-          Search through 120,000+ Product Hunt ideas using AI-powered analysis
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4 max-h-[540px] overflow-y-auto pr-2">
-        {/* Search Configuration */}
-        <div className="space-y-4">
-          {/* Current Idea Toggle */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="use-current-idea"
-              checked={useCurrentIdea}
-              onChange={(e) => setUseCurrentIdea(e.target.checked)}
-              className="rounded"
-            />
-            <Label htmlFor="use-current-idea" className="text-sm font-medium">
-              Use current idea for search
-            </Label>
-          </div>
-
-          {!useCurrentIdea ? (
-            <div className="space-y-2">
-              <Label htmlFor="search-query">Custom Search Query</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="search-query"
-                  placeholder="Enter your startup idea to find similar ones..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleSearch}
-                  disabled={isSearching || !searchQuery.trim()}
-                  size="sm"
-                >
-                  {isSearching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                </Button>
+    <div className="w-full space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="h-5 w-5" />
+            Find Similar Startup Ideas
+          </CardTitle>
+          <CardDescription>
+            Enhanced semantic matching with intelligent concept extraction and popularity weighting
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4 pb-6">
+          {/* Search Configuration */}
+          <div className="space-y-3">
+            {/* Current Idea Display */}
+            <div className="p-3 bg-muted/50 rounded-lg border">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">Searching for ideas similar to:</p>
               </div>
-            </div>
-          ) : (
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Will search for ideas similar to:</p>
-              <p className="font-medium">{currentIdea.title}</p>
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              <p className="font-medium text-foreground mb-1">{currentIdea.title}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2">
                 {currentIdea.description}
               </p>
-            </div>
-          )}
-
-          {/* Search Parameters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-sm">Results Limit</Label>
-              <Select value={searchLimit} onValueChange={setSearchLimit}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 results</SelectItem>
-                  <SelectItem value="10">10 results</SelectItem>
-                  <SelectItem value="20">20 results</SelectItem>
-                  <SelectItem value="50">50 results</SelectItem>
-                </SelectContent>
-              </Select>
+              {currentIdea.category && (
+                <Badge variant="secondary" className="mt-2 text-xs">
+                  {currentIdea.category}
+                </Badge>
+              )}
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-sm">Min Similarity</Label>
-              <Select value={minSimilarity} onValueChange={setMinSimilarity}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0.1">10% (Most results)</SelectItem>
-                  <SelectItem value="0.3">30% (Many results)</SelectItem>
-                  <SelectItem value="0.5">50% (Some results)</SelectItem>
-                  <SelectItem value="0.7">70% (Similar)</SelectItem>
-                  <SelectItem value="0.9">90% (Nearly identical)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-sm">Action</Label>
+            {/* Search Actions */}
+            <div className="flex flex-col gap-2">
               <Button
                 onClick={handleSearchCurrentIdea}
                 disabled={isSearching}
-                className="w-full h-9"
-                size="sm"
+                className="w-full"
+                size="default"
               >
                 {isSearching ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Searching...
+                    Analyzing...
                   </>
                 ) : (
                   <>
-                    <Brain className="h-4 w-4 mr-2" />
-                    Search This Idea
+                    <Search className="h-4 w-4 mr-2" />
+                    Find Similar Ideas
                   </>
                 )}
               </Button>
+              
+              {(results || savedResults) && (
+                <Button
+                  onClick={handleRefreshSearch}
+                  disabled={isSearching}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  <RefreshCw className="h-3 w-3 mr-2" />
+                  Refresh Search
+                </Button>
+              )}
+
+              {/* Debug Toggle */}
+              {debugInfo && (
+                <Button
+                  onClick={() => setShowDebug(!showDebug)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  <Eye className="h-3 w-3 mr-2" />
+                  {showDebug ? 'Hide' : 'Show'} AI Interpretation
+                </Button>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        )}
-
-        {/* Results Section */}
-        {results && (
-          <div className="space-y-4">
-            <Separator />
-            
-            {/* Fallback Warning */}
-            {results.fallback && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <Brain className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          {/* AI Interpretation Debug Section */}
+          {debugInfo && showDebug && (
+            <div className="space-y-3">
+              <Separator />
+              <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Code className="h-4 w-4 text-blue-600" />
+                    AI Interpretation & Search Query
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    What the AI extracted from your idea and how it's searching
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-xs">
+                  {/* Search Mode Indicator */}
                   <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                      Fallback Mode Active
+                    <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                      🔧 Search Mode:
                     </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                      Using basic search on local database. Configure environment variables for full AI search.
+                    <Badge 
+                      variant="default" 
+                      className="text-xs"
+                    >
+                      Core Problem Focus
+                    </Badge>
+                  </div>
+
+                  {/* Core Problem (if in core-problem mode) */}
+                  {debugInfo.coreProblem && (
+                    <div>
+                      <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                        🎯 Core Problem Extracted:
+                      </p>
+                      <p className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 p-2 rounded font-mono text-orange-800 dark:text-orange-200">
+                        "{debugInfo.coreProblem}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Cleaned Title */}
+                  <div>
+                    <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                      📝 Cleaned Title (removed generic terms):
+                    </p>
+                    <p className="bg-white dark:bg-gray-800 p-2 rounded border font-mono">
+                      "{debugInfo.cleanTitle || 'No specific terms found'}"
                     </p>
                   </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Search Summary */}
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  Found {results.ideas.length} similar ideas
-                </span>
-                {results.fallback && (
-                  <Badge variant="outline" className="text-xs">
-                    Local DB
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span className="text-xs">{results.searchTime}ms</span>
-              </div>
-            </div>
 
-                         {/* Results List */}
-             <div className="space-y-3">
-              {results.ideas.length === 0 ? (
-                <div className="text-center py-8">
-                  <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No similar ideas found</p>
-                  <p className="text-sm text-muted-foreground">Try adjusting your search parameters</p>
+                  {/* Search Components */}
+                  <div>
+                    <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                      🔧 Search Components (in priority order):
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 bg-white dark:bg-gray-800 p-2 rounded border">
+                      {debugInfo.searchComponents.map((component, i) => (
+                        <li key={i} className="font-mono text-xs">
+                          {component || '<empty>'}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* Final Query */}
+                  <div>
+                    <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                      🔍 Final Search Query Used:
+                    </p>
+                    <p className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 p-3 rounded font-mono text-green-800 dark:text-green-200 font-medium">
+                      "{debugInfo.finalQuery}"
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
+          {/* Results Section */}
+          {results && (
+            <div className="space-y-3">
+              <Separator />
+              
+              {/* Fallback Warning */}
+              {results.fallback && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Database className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        Local Database Search
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        Using fallback search mode. Results may be limited.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                results.ideas.map((idea: SimilarIdea, index: number) => (
-                                     <Card key={idea.id} className="hover:shadow-sm transition-shadow border-l-4 border-l-transparent hover:border-l-blue-500">
-                     <CardContent className="p-3">
-                                              {/* Header */}
-                        <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs font-mono">
+              )}
+              
+              {/* Search Summary */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {results.ideas.length} similar ideas found
+                  </span>
+                  {savedResults && (
+                    <Badge variant="outline" className="text-xs">
+                      <Database className="h-3 w-3 mr-1" />
+                      Saved
+                    </Badge>
+                  )}
+                </div>  
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span className="text-xs">{results.searchTime}ms</span>
+                </div>
+              </div>
+
+              {/* Results List */}
+              <div className="space-y-3">
+                {results.ideas.length === 0 ? (
+                  <div className="flex items-center justify-center h-48">
+                    <div className="text-center">
+                      <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground font-medium">No similar ideas found</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Your idea might be quite unique! Try a different search approach.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  results.ideas.map((idea: SimilarIdea, index: number) => (
+                    <Card key={idea.id} className="hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-primary">
+                      <CardContent className="p-4">
+                        {/* Header with improved spacing */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="text-xs font-mono px-2 py-1">
                               #{idea.rank}
                             </Badge>
                             <Badge 
                               variant="outline" 
-                              className={`text-xs ${getSimilarityColor(idea.similarity)}`}
+                              className={`text-xs font-medium px-2 py-1 ${getSimilarityColor(idea.similarity)}`}
                             >
                               {getSimilarityLabel(idea.similarity)} {idea.similarityPercentage}
                             </Badge>
                           </div>
-                        </div>
-                        
-                        {idea.websites && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2 text-xs"
-                            onClick={() => {
-                              const url = extractWebsiteUrl(idea.websites);
-                              if (url) {
-                                window.open(url, '_blank');
-                              }
-                            }}
-                          >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            Visit
-                          </Button>
-                        )}
-                      </div>
-
-                                             {/* Product Info */}
-                       <div className="space-y-1.5">
-                        <h4 className="font-semibold text-base leading-tight">
-                          {idea.name}
-                        </h4>
-                        
-                        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                          {idea.description}
-                        </p>
-
-                                                 {/* Metrics */}
-                         <div className="flex items-center gap-4 pt-1.5">
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3 text-green-600" />
-                            <span className="text-sm font-medium text-green-700">
-                              {formatUpvotes(idea.upvotes || 0)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">upvotes</span>
-                          </div>
                           
-                          {idea.category_tags && (
-                            <Badge variant="secondary" className="text-xs">
-                              {idea.category_tags.split(',')[0].replace(/['"[\]]/g, '')}
-                            </Badge>
+                          {idea.websites && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 px-3 text-xs hover:bg-primary/10"
+                              onClick={() => {
+                                const url = extractWebsiteUrl(idea.websites);
+                                if (url) {
+                                  window.open(url, '_blank');
+                                }
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Visit
+                            </Button>
                           )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+
+                        {/* Product Info with better typography */}
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-base leading-tight text-foreground">
+                            {idea.name}
+                          </h4>
+                          
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {idea.description}
+                          </p>
+
+                          {/* Enhanced Metrics */}
+                          <div className="flex items-center gap-4 pt-2">
+                            <div className="flex items-center gap-1">
+                              <TrendingUp className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-semibold text-green-700">
+                                {formatUpvotes(idea.upvotes || 0)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">upvotes</span>
+                            </div>
+                            
+                            {idea.category_tags && (
+                              <Badge variant="secondary" className="text-xs">
+                                {idea.category_tags.split(',')[0].replace(/['"[\]]/g, '')}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+
+              {/* Clear Results */}
+              {results.ideas.length > 0 && (
+                <div className="pt-2">
+                  <Button variant="outline" onClick={clearResults} size="sm" className="w-full">
+                    Clear Results
+                  </Button>
+                </div>
               )}
             </div>
+          )}
 
-            {/* Clear Results */}
-            {results.ideas.length > 0 && (
-              <div className="pt-2">
-                <Button variant="outline" onClick={clearResults} size="sm" className="w-full">
-                  Clear Results
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-                 {/* Tips Section */}
-         <div className="p-3 bg-muted/50 rounded-lg border">
-           <div className="flex items-start gap-2">
-             <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-             <div>
-               <p className="text-sm font-medium mb-1">Tips for Better Results</p>
-               <ul className="text-xs text-muted-foreground space-y-0.5">
-                 <li>• Use natural language to describe your idea</li>
-                 <li>• Lower similarity threshold for more diverse results</li>
-                 <li>• Try different keyword combinations</li>
-               </ul>
-             </div>
-           </div>
-         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 } 

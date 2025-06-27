@@ -1,6 +1,7 @@
 export interface PRD {
   id: string
   user_id: string
+  idea_id?: string | null
   title: string
   original_idea: string
   generated_prd: string
@@ -39,13 +40,14 @@ export interface Idea {
   id: string;
   title: string;
   description: string;
-  content: string | null;
+  content?: string | null;
   category: string;
   status: IdeaStatus;
   priority: IdeaPriority;
   market_size: string;
   competition: string;
   notes: string;
+  attachments: string[];
   is_favorite: boolean;
   target_audience?: string;
   user_id: string;

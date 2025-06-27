@@ -128,13 +128,13 @@ export function EnhancedSearch({
     <div className={cn("space-y-3", className)}>
       {/* Main Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#B9D4AA] h-4 w-4" />
         <Input
           ref={searchInputRef}
           placeholder={placeholder}
           value={filters.query}
           onChange={(e) => handleQueryChange(e.target.value)}
-          className="pl-10 pr-20"
+          className="pl-10 pr-20 bg-[#5A827E]/30 border-[#84AE92] text-[#FAFFCA] placeholder-[#B9D4AA]/80 focus:border-[#B9D4AA]"
         />
         
         {/* Filter Button */}
@@ -144,7 +144,7 @@ export function EnhancedSearch({
               variant="ghost"
               size="sm"
               onClick={() => handleQueryChange("")}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-white/60 hover:text-white hover:bg-white/10"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -156,37 +156,37 @@ export function EnhancedSearch({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 px-2",
-                  activeFiltersCount > 0 && "bg-primary/10 text-primary"
+                  "h-8 px-2 text-white/60 hover:text-white hover:bg-white/10",
+                  activeFiltersCount > 0 && "bg-white/20 text-white"
                 )}
               >
                 <Filter className="h-4 w-4" />
                 {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
+                  <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs bg-white/30 text-white">
                     {activeFiltersCount}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-4" align="end">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Filters</h4>
-                  {activeFiltersCount > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Clear all
-                    </Button>
-                  )}
-                </div>
+            <PopoverContent className="w-80 p-4 bg-black/90 backdrop-blur-md border-white/20" align="end">
+                              <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-white">Filters</h4>
+                    {activeFiltersCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="h-6 px-2 text-xs text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
 
-                {/* Status Filter */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
+                  {/* Status Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">Status</label>
                   <Select
                     value={filters.status}
                     onValueChange={(value) => updateFilters({ status: value })}

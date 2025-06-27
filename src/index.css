@@ -56,6 +56,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @layer base {
   :root {
     /* Light theme with greyish/off-white backgrounds for better visibility and contrast */

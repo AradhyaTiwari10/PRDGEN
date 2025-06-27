@@ -29,7 +29,7 @@ Last Updated: ${new Date(idea.updated_at).toLocaleDateString()}
           .map(msg => ({ role: msg.role, message: msg.message }))
       : [];
 
-    const response = await fetch('/api/idea-assistant', {
+    const response = await fetch('http://localhost:8081/api/idea-assistant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ Notes: ${idea.notes || 'None'}
 Content: ${idea.content || 'None'}
 `.trim();
 
-    const response = await fetch('/api/idea-assistant', {
+    const response = await fetch('http://localhost:8081/api/idea-assistant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -184,19 +184,22 @@ export function SharedIdeasGrid() {
       {sharedIdeas.map((idea) => (
         <Card
           key={idea.id}
-          className="group relative cursor-pointer hover:shadow-xl transition-all duration-300 ease-out flex flex-col h-full min-h-[280px] hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border hover:border-primary/20"
+          className="group relative cursor-pointer hover:shadow-xl transition-all duration-300 ease-out flex flex-col h-full min-h-[280px] hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border border-[#5A827E] hover:border-[#84AE92] bg-[#5A827E]/20 backdrop-blur-md"
           onClick={() => navigate(`/idea/${idea.id}`)}
         >
           {/* Shared Indicator */}
           <div className="absolute top-2 right-2 z-10">
-            <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur-sm">
+            <Badge variant="outline" className="gap-1 bg-[#5A827E]/50 backdrop-blur-sm border-[#84AE92] text-white">
               <Users className="h-3 w-3" />
               Shared
             </Badge>
           </div>
 
           {/* Hover Background Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+          {/* Subtle Border Glow */}
+          <div className="absolute inset-0 rounded-lg border border-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
           <CardHeader className="pb-2 relative z-10">
             <CardTitle className="text-lg group-hover:text-primary transition-colors duration-300 pr-16">

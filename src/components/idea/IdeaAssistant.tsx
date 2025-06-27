@@ -408,7 +408,7 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
-          <div className="px-6 py-4 space-y-4">
+          <div className="px-8 py-6 space-y-4">
               {/* Welcome typing message */}
               {welcomeTypingMessage && (
                 <div className="flex gap-3 justify-start animate-in slide-in-from-left-2 duration-300">

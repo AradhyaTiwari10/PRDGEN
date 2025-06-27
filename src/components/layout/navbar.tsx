@@ -1,71 +1,45 @@
+"use client";
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
-import { FileText, LogOut, Keyboard } from "lucide-react";
+import { FileText, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
-import { NotificationDropdown } from "@/components/ui/notification-dropdown";
-import { useTheme } from "@/components/theme-provider";
-import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 export function Navbar() {
-  const navigate = useNavigate();
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const { theme } = useTheme();
+  const { user } = useAuth();
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/");
   };
 
-  // Global keyboard shortcuts for help
-  useKeyboardShortcuts([
-    commonShortcuts.help(() => setIsShortcutsOpen(true)),
-  ]);
+  if (!user) {
+    return null;
+  }
 
   return (
-    <header className="bg-background border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div
-            className="flex items-center space-x-1 cursor-pointer"
-            onClick={() => navigate("/dashboard")}
-          >
-            <img
-              src={theme === "dark" ? "https://i.postimg.cc/DwVdb9NB/image.png" : "/icon.png"}
-              alt="IdeaVault Icon"
-              className="h-8 w-auto"
-            />
-            <span className="text-xl font-bold text-foreground">IdeaVault</span>
-          </div>
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <FileText className="h-6 w-6 text-primary" />
+          <span className="text-lg font-semibold">IdeaVault</span>
+        </div>
 
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsShortcutsOpen(true)}
-              title="Keyboard shortcuts (Ctrl+/)"
-            >
-              <Keyboard className="h-4 w-4 mr-2" />
-              Shortcuts
-            </Button>
-            <NotificationDropdown />
-            <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-muted-foreground">
+            {user.email}
+          </span>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </div>
-
-      {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcuts
-        isOpen={isShortcutsOpen}
-        onOpenChange={setIsShortcutsOpen}
-      />
-    </header>
+    </nav>
   );
 }

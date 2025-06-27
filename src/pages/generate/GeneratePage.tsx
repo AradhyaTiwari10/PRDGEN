@@ -44,10 +44,7 @@ export default function GeneratePage() {
     if (idea) {
       setProductIdea(idea.description);
       setProductCategory(idea.category || "");
-      // If the idea has target audience information, set it
-      if (idea.target_audience) {
-        setTargetAudience(idea.target_audience);
-      }
+      // Target audience is now stored in the notes field, but we'll let users fill this manually
     }
   }, [idea]);
 
@@ -68,12 +65,13 @@ export default function GeneratePage() {
         .from("prds")
         .insert([
           {
-            product_idea: productIdea,
-            product_category: productCategory,
-            target_audience: targetAudience,
+            title: productIdea.split("\n")[0].slice(0, 100) || "New PRD",
+            original_idea: `${productIdea}\n\nCategory: ${productCategory}\nTarget Audience: ${targetAudience}`,
+            generated_prd: "PRD content will be generated...",
+            category: productCategory,
             user_id: user.id,
             status: "draft",
-            idea_id: idea?.id,
+            is_favorite: false,
           },
         ])
         .select()

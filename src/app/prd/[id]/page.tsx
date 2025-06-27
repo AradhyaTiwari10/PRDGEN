@@ -63,9 +63,11 @@ export default function PRDPage() {
         <Navbar />
         <main className="container mx-auto py-8">
           <div className="space-y-6">
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-[600px] w-full" />
+            <Skeleton className="h-8 w-1/3 bg-[#5A827E]/20 border border-[#5A827E]/30" />
+            <Skeleton className="h-4 w-1/4 bg-[#5A827E]/15 border border-[#5A827E]/25" />
+            <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-6">
+              <Skeleton className="h-[600px] w-full bg-[#5A827E]/10 border border-[#B9D4AA]/20" />
+            </div>
           </div>
         </main>
       </div>

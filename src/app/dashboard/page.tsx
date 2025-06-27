@@ -36,10 +36,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
+
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
@@ -54,12 +53,19 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
-import { AnimatedNewIdeaButton } from "@/components/ui/animated-new-idea-button";
 import { CollaborationRequestModal } from "@/components/ui/collaboration-request-modal";
 import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
 import { SharedIdeasGrid } from "@/components/ui/shared-ideas-grid";
-import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { NotificationHistory } from "@/components/ui/notification-history";
+
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from "@/components/ui/prompt-input";
+import { ArrowUp, Square } from "lucide-react";
+import { enhanceIdea } from "@/lib/gemini";
+import { toast } from "@/hooks/use-toast";
 
 // Helper function to capitalize first letter
 const capitalizeFirst = (str: string) => {
@@ -88,8 +94,27 @@ export default function DashboardPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
-    if (tabParam && ['ideas', 'shared', 'notifications', 'prds'].includes(tabParam)) {
+    if (tabParam && ['ideas', 'shared', 'prds'].includes(tabParam)) {
       setActiveTab(tabParam);
+    }
+
+    // Handle prompt parameter from landing page
+    const promptParam = urlParams.get('prompt');
+    if (promptParam) {
+      setPromptInput(decodeURIComponent(promptParam));
+      // Auto-focus the prompt input after a short delay
+      setTimeout(() => {
+        const promptTextarea = document.querySelector('textarea[placeholder*="With Nexi"]') as HTMLTextAreaElement;
+        if (promptTextarea) {
+          promptTextarea.focus();
+          promptTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      // Clean up URL to remove the prompt parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('prompt');
+      window.history.replaceState({}, '', newUrl.toString());
     }
   }, []);
 
@@ -98,7 +123,7 @@ export default function DashboardPage() {
     const handleLocationChange = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
-      if (tabParam && ['ideas', 'shared', 'notifications', 'prds'].includes(tabParam)) {
+      if (tabParam && ['ideas', 'shared', 'prds'].includes(tabParam)) {
         setActiveTab(tabParam);
       }
     };
@@ -123,34 +148,11 @@ export default function DashboardPage() {
 
   // Phase 1 features state
   const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
-  const [formErrors, setFormErrors] = useState<{title?: string; description?: string}>({});
-  const [newIdea, setNewIdea] = useState({
-    title: "",
-    description: "",
-    category: "",
-    status: "new" as IdeaStatus,
-    priority: "medium" as IdeaPriority,
-    market_size: "",
-    competition: "",
-    notes: "",
-    is_favorite: false,
-    content: "",
-  });
+  const [promptInput, setPromptInput] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
-  // Global keyboard shortcuts - must be called before any conditional returns
-  useKeyboardShortcuts([
-    commonShortcuts.search(() => setIsQuickSearchOpen(true)),
-    commonShortcuts.newItem(() => setIsCreateDialogOpen(true)),
-    commonShortcuts.escape(() => {
-      if (isQuickSearchOpen) {
-        setIsQuickSearchOpen(false);
-      } else if (isCreateDialogOpen) {
-        setIsCreateDialogOpen(false);
-      }
-    }),
-  ]);
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -169,42 +171,94 @@ export default function DashboardPage() {
   }, [navigate]);
 
   const handleCreateIdea = async () => {
-    // Validate required fields
-    const errors: {title?: string; description?: string} = {};
-
-    if (!newIdea.title.trim()) {
-      errors.title = "Title is required";
-    }
-
-    if (!newIdea.description.trim()) {
-      errors.description = "Description is required";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+    if (!promptInput.trim()) {
       return;
     }
 
-    // Clear any previous errors
-    setFormErrors({});
+    setIsEnhancing(true);
 
     try {
-      await createIdea(newIdea);
-      setIsCreateDialogOpen(false);
-      setNewIdea({
-        title: "",
-        description: "",
-        category: "",
-        status: "new",
-        priority: "medium",
-        market_size: "",
-        competition: "",
-        notes: "",
-        is_favorite: false,
-        content: "",
+      // Enhance the idea using Gemini
+      const enhancedIdea = await enhanceIdea(promptInput);
+      
+      // Create the idea with enhanced data
+      const newIdeaData = {
+        title: enhancedIdea.title,
+        description: enhancedIdea.description,
+        category: enhancedIdea.category,
+        status: "new" as IdeaStatus,
+        priority: enhancedIdea.priority as IdeaPriority,
+        market_size: enhancedIdea.market_size,
+        competition: enhancedIdea.competition,
+        notes: `Original Idea: "${promptInput}"\n\nTarget Audience: ${enhancedIdea.target_audience}\n\nProblem: ${enhancedIdea.problem_statement}\n\nValue Proposition: ${enhancedIdea.value_proposition}\n\nKey Features: ${enhancedIdea.key_features.join(", ")}`,
+        attachments: [],
+        is_favorite: false
+      };
+
+      const newIdea = await createIdea(newIdeaData);
+      
+      toast({
+        title: "Idea Created Successfully!",
+        description: `"${enhancedIdea.title}" has been enhanced and added to your ideas.`,
       });
+                  
+      setPromptInput("");
+      
+      // Navigate to the newly created idea
+      navigate(`/idea/${newIdea.id}`);
     } catch (error) {
       console.error("Failed to create idea:", error);
+      
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      let actionMessage = "";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('quota') || error.message.includes('rate limit')) {
+          errorMessage = "Gemini API limit reached. Creating idea manually...";
+          actionMessage = "Your idea has been saved, but you'll need to edit the details manually.";
+          
+                     // Create a basic idea without AI enhancement as fallback
+           try {
+             const basicIdeaData = {
+               title: promptInput.slice(0, 60) + (promptInput.length > 60 ? "..." : ""),
+               description: promptInput,
+               category: "Other",
+               status: "new" as IdeaStatus,
+               priority: "medium" as IdeaPriority,
+               market_size: "",
+               competition: "",
+               notes: `Original Idea: "${promptInput}"\n\nCreated manually due to API limits. Please enhance the details.`,
+               attachments: [],
+               is_favorite: false,
+             };
+            
+            const newBasicIdea = await createIdea(basicIdeaData);
+            
+            toast({
+              title: "Idea Created (Manual Mode)",
+              description: "Your idea has been saved. You can edit and enhance it manually from the Ideas page.",
+            });
+            
+            setPromptInput("");
+            
+            // Navigate to the newly created idea
+            navigate(`/idea/${newBasicIdea.id}`);
+            return;
+          } catch (fallbackError) {
+            console.error("Fallback creation failed:", fallbackError);
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Failed to Create Idea",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsEnhancing(false);
     }
   };
 
@@ -243,23 +297,23 @@ export default function DashboardPage() {
         <Navbar />
         <main className="container mx-auto py-8">
           <div className="mb-8">
-            <Skeleton className="h-10 w-48 mb-4" />
+            <Skeleton className="h-10 w-48 mb-4 bg-[#5A827E]/20 border border-[#5A827E]/30" />
             <div className="flex space-x-4 mb-4">
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-8 w-24 bg-[#5A827E]/20 border border-[#5A827E]/30" />
+              <Skeleton className="h-8 w-24 bg-[#5A827E]/20 border border-[#5A827E]/30" />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card className="bg-card" key={i}>
+              <Card className="bg-black/40 backdrop-blur-md border border-white/10" key={i}>
                 <CardHeader>
-                  <Skeleton className="h-6 w-40 mb-2" />
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-40 mb-2 bg-[#5A827E]/30 border border-[#B9D4AA]/30" />
+                  <Skeleton className="h-4 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-full mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-3/4 mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-1/2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
                 </CardContent>
               </Card>
             ))}
@@ -281,9 +335,15 @@ export default function DashboardPage() {
     );
   }
 
-  // Keyboard shortcut handlers
+
   const handleNewIdea = () => {
-    setIsCreateDialogOpen(true);
+    setPromptInput("");
+    // Focus on the prompt input
+    const promptInput = document.querySelector('textarea[placeholder*="Describe your product idea"]') as HTMLTextAreaElement;
+    if (promptInput) {
+      promptInput.focus();
+      promptInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
 
@@ -303,191 +363,75 @@ export default function DashboardPage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-
-          {activeTab === "prds" ? (
-            <InteractiveHoverButton
-              text="Generate New Prompt"
-              variant="default"
-              onClick={() => navigate("/generate")}
-              className="px-4 py-2"
-            />
-          ) : (
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={(open) => {
-                setIsCreateDialogOpen(open);
-                if (!open) {
-                  // Clear form errors when dialog is closed
-                  setFormErrors({});
-                }
-              }}
-            >
-              <DialogTrigger asChild>
-                <AnimatedNewIdeaButton />
-              </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>Create New Idea</DialogTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Fields marked with <span className="text-destructive">*</span> are required
+        {/* Centered Prompt Input Section */}
+        <div className="max-w-2xl mx-auto text-center space-y-6 mb-8">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-foreground">Describe Your Idea</h2>
+            <p className="text-muted-foreground">
+              Tell Nexi about your product idea and Nexi will help structure and enhance it
                     </p>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="title">
-                        Title <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="title"
-                        value={newIdea.title}
-                        onChange={(e) => {
-                          setNewIdea({ ...newIdea, title: e.target.value });
-                          // Clear error when user starts typing
-                          if (formErrors.title) {
-                            setFormErrors({ ...formErrors, title: undefined });
-                          }
-                        }}
-                        className={formErrors.title ? "border-destructive" : ""}
-                        placeholder="Enter idea title..."
-                      />
-                      {formErrors.title && (
-                        <p className="text-sm text-destructive">{formErrors.title}</p>
-                      )}
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">
-                        Description <span className="text-destructive">*</span>
-                      </Label>
-                      <Textarea
-                        id="description"
-                        value={newIdea.description}
-                        onChange={(e) => {
-                          setNewIdea({
-                            ...newIdea,
-                            description: e.target.value,
-                          });
-                          // Clear error when user starts typing
-                          if (formErrors.description) {
-                            setFormErrors({ ...formErrors, description: undefined });
-                          }
-                        }}
-                        className={formErrors.description ? "border-destructive" : ""}
-                        placeholder="Describe your idea in detail..."
-                        rows={3}
-                      />
-                      {formErrors.description && (
-                        <p className="text-sm text-destructive">{formErrors.description}</p>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Input
-                          id="category"
-                          value={newIdea.category}
-                          onChange={(e) =>
-                            setNewIdea({ ...newIdea, category: e.target.value })
-                          }
+          
+          <div className="w-full">
+            <PromptInput
+              value={promptInput}
+              onValueChange={setPromptInput}
+              isLoading={isEnhancing}
+              onSubmit={handleCreateIdea}
+              className="w-full"
+              maxHeight={200}
+            >
+              <PromptInputTextarea 
+                animatedPlaceholder={{
+                  texts: [
+                    "create a mobile app that helps students find study groups nearby",
+                    "build a SaaS platform for small businesses to manage their inventory", 
+                    "design an AI-powered tool that creates personalized workout plans",
+                    "develop a web app that connects freelancers with local businesses",
+                    "invent a smart home device that optimizes energy consumption",
+                    "launch a social platform for pet owners to arrange playdates",
+                    "make an educational app that gamifies learning coding",
+                    "start a marketplace for sustainable and eco-friendly products",
+                    "help me brainstorm a revolutionary tech startup idea",
+                    "analyze the market potential for my product concept"
+                  ],
+                  prefix: "With Nexi "
+                }}
                         />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="status">Status</Label>
-                        <Select
-                          value={newIdea.status}
-                          onValueChange={(value: IdeaStatus) =>
-                            setNewIdea({ ...newIdea, status: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="new">New</SelectItem>
-                            <SelectItem value="in_progress">
-                              In Progress
-                            </SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="on_hold">On Hold</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="priority">Priority</Label>
-                        <Select
-                          value={newIdea.priority}
-                          onValueChange={(value: IdeaPriority) =>
-                            setNewIdea({ ...newIdea, priority: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="market_size">Market Size</Label>
-                        <Input
-                          id="market_size"
-                          value={newIdea.market_size}
-                          onChange={(e) =>
-                            setNewIdea({
-                              ...newIdea,
-                              market_size: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="competition">Competition</Label>
-                      <Textarea
-                        id="competition"
-                        value={newIdea.competition}
-                        onChange={(e) =>
-                          setNewIdea({
-                            ...newIdea,
-                            competition: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea
-                        id="notes"
-                        value={newIdea.notes}
-                        onChange={(e) =>
-                          setNewIdea({ ...newIdea, notes: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
+              <PromptInputActions className="justify-end pt-2">
+                <PromptInputAction
+                  tooltip={isEnhancing ? "AI is enhancing your idea..." : "Create idea with AI enhancement"}
+                >
                     <Button
-                      variant="outline"
-                      onClick={() => setIsCreateDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
+                    variant="default"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
                       onClick={handleCreateIdea}
-                      disabled={!newIdea.title.trim() || !newIdea.description.trim()}
+                    disabled={!promptInput.trim() || isEnhancing}
                     >
-                      Create Idea
+                    {isEnhancing ? (
+                      <Square className="size-5 fill-current animate-pulse" />
+                    ) : (
+                      <ArrowUp className="size-5" />
+                    )}
                     </Button>
+                </PromptInputAction>
+              </PromptInputActions>
+            </PromptInput>
+            
+            {isEnhancing && (
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  AI is analyzing and enhancing your idea...
+                </div>
                   </div>
-                </DialogContent>
-              </Dialog>
             )}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Your Workspace</h1>
         </div>
 
         <SimpleAnimatedTabs
@@ -499,7 +443,7 @@ export default function DashboardPage() {
               label: "Ideas",
               icon: <FileText className="h-4 w-4" />,
               content: (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {/* Enhanced Search Component */}
                   <EnhancedSearch
                     onFiltersChange={setSearchFilters}
@@ -663,18 +607,7 @@ export default function DashboardPage() {
                 </div>
               )
             },
-            {
-              id: "notifications",
-              label: "Notifications",
-              icon: <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM11 19H6.5a2.5 2.5 0 010-5H11m0 5v-5m0 5h5m-5-5V9a3 3 0 116 0v5m-6 0h6" />
-              </svg>,
-              content: (
-                <div className="space-y-4">
-                  <NotificationHistory />
-                </div>
-              )
-            },
+
             {
               id: "prds",
               label: "PRDs",

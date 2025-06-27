@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Download, Heart, Trash2, Copy } from "lucide-react";
+import { Download, Heart, Trash2, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import {
@@ -29,6 +29,7 @@ interface PRDViewerProps {
 
 export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
   const [isFavorite, setIsFavorite] = useState(prd.is_favorite);
+  const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const { deletePRD } = usePRDs();
 
@@ -41,7 +42,6 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
         content = `# ${prd.title}\n\n## Original Idea\n\n${prd.original_idea}\n\n## Product Requirements Document\n\n${prd.generated_prd}`;
         fileExtension = "md";
       } else {
-        // For txt format, use plain text conversion
         const plainTextPRD = markdownToPlainText(prd.generated_prd);
         content = `${prd.title}\n\nOriginal Idea:\n${prd.original_idea}\n\nProduct Requirements Document:\n${plainTextPRD}`;
         fileExtension = "txt";
@@ -70,28 +70,142 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
     }
   };
 
-  // Function to convert markdown to plain text
+  // Enhanced markdown renderer that cleans and formats content properly
+  const renderMarkdown = (markdown: string) => {
+    // First, clean up the markdown content
+    let cleanedMarkdown = markdown
+      // Remove code block markers
+      .replace(/```[\w]*\n?/g, '')
+      .replace(/```/g, '')
+      // Remove horizontal rules
+      .replace(/^---+$/gm, '')
+      .replace(/^\*\*\*+$/gm, '')
+      .replace(/^___+$/gm, '')
+      // Remove extra whitespace and empty lines at start/end
+      .trim()
+      // Clean up multiple consecutive empty lines
+      .replace(/\n\s*\n\s*\n/g, '\n\n');
+
+    const lines = cleanedMarkdown.split('\n');
+    const elements: JSX.Element[] = [];
+    let key = 0;
+
+    // Helper function to process inline markdown formatting
+    const processInlineFormatting = (text: string): (string | JSX.Element)[] => {
+      const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/);
+      return parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={index} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
+        } else if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
+          return <em key={index} className="italic text-foreground">{part.slice(1, -1)}</em>;
+        } else if (part.startsWith('`') && part.endsWith('`')) {
+          return <code key={index} className="bg-muted px-1 py-0.5 rounded text-sm font-mono">{part.slice(1, -1)}</code>;
+        }
+        return part;
+      });
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip empty lines
+      if (!line) {
+        elements.push(<div key={key++} className="mb-2" />);
+        continue;
+      }
+      
+      // Headers
+      if (line.startsWith('### ')) {
+        const headerText = line.replace('### ', '');
+        elements.push(
+          <h3 key={key++} className="text-lg font-semibold text-foreground mt-6 mb-3 border-b border-border pb-1">
+            {processInlineFormatting(headerText)}
+          </h3>
+        );
+      } else if (line.startsWith('## ')) {
+        const headerText = line.replace('## ', '');
+        elements.push(
+          <h2 key={key++} className="text-xl font-bold text-foreground mt-8 mb-4 border-b-2 border-primary/20 pb-2">
+            {processInlineFormatting(headerText)}
+          </h2>
+        );
+      } else if (line.startsWith('# ')) {
+        const headerText = line.replace('# ', '');
+        elements.push(
+          <h1 key={key++} className="text-2xl font-bold text-foreground mt-8 mb-6">
+            {processInlineFormatting(headerText)}
+          </h1>
+        );
+      }
+      // Bullet points
+      else if (line.startsWith('- ') || line.startsWith('* ')) {
+        const text = line.replace(/^[-*]\s+/, '');
+        elements.push(
+          <div key={key++} className="flex items-start gap-2 mb-2 ml-4">
+            <span className="text-primary mt-2 text-xs">•</span>
+            <span className="text-muted-foreground flex-1">{processInlineFormatting(text)}</span>
+          </div>
+        );
+      }
+      // Numbered lists
+      else if (line.match(/^\d+\.\s/)) {
+        const number = line.match(/^(\d+)\./)?.[1];
+        const text = line.replace(/^\d+\.\s+/, '');
+        elements.push(
+          <div key={key++} className="flex items-start gap-3 mb-2 ml-4">
+            <span className="text-primary font-medium min-w-[1.5rem]">{number}.</span>
+            <span className="text-muted-foreground flex-1">{processInlineFormatting(text)}</span>
+          </div>
+        );
+      }
+      // Blockquotes
+      else if (line.startsWith('> ')) {
+        const text = line.replace(/^>\s+/, '');
+        elements.push(
+          <div key={key++} className="border-l-4 border-primary/30 pl-4 my-3 bg-muted/20 py-2">
+            <p className="text-muted-foreground italic">{processInlineFormatting(text)}</p>
+          </div>
+        );
+      }
+      // Regular paragraphs with inline formatting
+      else {
+        elements.push(
+          <p key={key++} className="text-muted-foreground mb-3 leading-relaxed">
+            {processInlineFormatting(line)}
+          </p>
+        );
+      }
+    }
+
+    return elements;
+  };
+
+  // Function to convert markdown to plain text (for copying)
   const markdownToPlainText = (markdown: string): string => {
     return markdown
-      // Remove headers (# ## ###) but keep the text
+      // Remove code blocks
+      .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
+      // Remove horizontal rules
+      .replace(/^---+$/gm, '')
+      .replace(/^\*\*\*+$/gm, '')
+      .replace(/^___+$/gm, '')
+      // Convert headers to plain text
       .replace(/^#{1,6}\s+(.+)$/gm, '$1')
-      // Remove bold/italic (**text** *text*) but keep the text
+      // Remove bold/italic formatting
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
-      // Remove links [text](url) but keep the text
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // Convert code blocks ``` to plain text (preserve content)
-      .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
-      // Remove inline code backticks `code` but keep the text
+      // Remove inline code formatting
       .replace(/`([^`]+)`/g, '$1')
-      // Remove blockquotes > but keep the text
+      // Remove links but keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Convert blockquotes
       .replace(/^>\s+(.+)$/gm, '$1')
-      // Convert bullet points to readable format
+      // Convert bullet points
       .replace(/^\*\s+(.+)$/gm, '• $1')
       .replace(/^-\s+(.+)$/gm, '• $1')
-      // Convert numbered lists to readable format
+      // Keep numbered lists as-is
       .replace(/^\d+\.\s+(.+)$/gm, '$1')
-      // Clean up extra whitespace
+      // Clean up whitespace
       .replace(/\n\s*\n\s*\n/g, '\n\n')
       .trim();
   };
@@ -102,7 +216,7 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
       await navigator.clipboard.writeText(plainText);
       toast({
         title: "Copied to Clipboard",
-        description: "Product Requirements Document copied as plain text",
+        description: "PRD content copied as plain text",
       });
     } catch (error) {
       toast({
@@ -118,7 +232,7 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
       await navigator.clipboard.writeText(prd.generated_prd);
       toast({
         title: "Copied to Clipboard",
-        description: "Product Requirements Document copied as markdown",
+        description: "PRD content copied as markdown",
       });
     } catch (error) {
       toast({
@@ -161,136 +275,150 @@ export function PRDViewer({ prd, onDelete }: PRDViewerProps) {
       if (onDelete) {
         onDelete();
       }
-      navigate("/dashboard");
     } catch (error) {
       console.error("Failed to delete PRD:", error);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-      <Card className="bg-card">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="space-y-2">
-              <CardTitle className="text-2xl text-foreground">
-                {prd.title}
-              </CardTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                {prd.category && (
-                  <Badge variant="secondary">{prd.category}</Badge>
-                )}
-                <Badge variant={prd.status === "final" ? "default" : "outline"}>
-                  {prd.status}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  Created {new Date(prd.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-
+    <div className="space-y-4 p-4">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2 flex-1">
+            <h2 className="text-lg font-semibold text-foreground leading-tight">{prd.title}</h2>
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleFavorite}
-                className={isFavorite ? "text-destructive" : ""}
-              >
-                <Heart
-                  className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`}
-                />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport("markdown")}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Markdown
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport("txt")}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Text
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete PRD</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this PRD? This action
-                      cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {prd.category && (
+                <Badge variant="secondary" className="text-xs">{prd.category}</Badge>
+              )}
+              <Badge variant={prd.status === "final" ? "default" : "outline"} className="text-xs">
+                {prd.status}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {new Date(prd.created_at).toLocaleDateString()}
+              </span>
             </div>
           </div>
-        </CardHeader>
-      </Card>
 
-      <Card className="bg-card">
-        <CardHeader>
-          <CardTitle className="text-foreground">Original Idea</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFavorite}
+            className="shrink-0"
+          >
+            <Heart
+              className={`h-4 w-4 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
+            />
+          </Button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyPlainText}
+            className="text-xs"
+          >
+            <Copy className="h-3 w-3 mr-1" />
+            Copy
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyMarkdown}
+            className="text-xs"
+          >
+            <Copy className="h-3 w-3 mr-1" />
+            Markdown
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleExport("txt")}
+            className="text-xs"
+          >
+            <Download className="h-3 w-3 mr-1" />
+            Text
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete PRD</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this PRD? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+
+      {/* Original Idea */}
+      <Card className="bg-muted/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-foreground">Original Idea</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground whitespace-pre-wrap">
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {prd.original_idea}
           </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-card">
-        <CardHeader>
+      {/* PRD Content */}
+      <Card>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-foreground">
+            <CardTitle className="text-sm font-medium text-foreground">
               Product Requirements Document
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyPlainText}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyMarkdown}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy as Markdown
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs"
+            >
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isExpanded ? 'Collapse' : 'Expand'}
+            </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-            {markdownToPlainText(prd.generated_prd)}
+        <CardContent className="pt-0">
+          <div className={`space-y-3 ${!isExpanded ? 'max-h-96 overflow-hidden' : ''}`}>
+            {renderMarkdown(prd.generated_prd)}
           </div>
+          {!isExpanded && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsExpanded(true)}
+                className="w-full text-xs"
+              >
+                Show Full PRD
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

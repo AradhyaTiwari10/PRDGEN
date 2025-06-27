@@ -3,8 +3,6 @@ import { z } from 'zod'
 
 export const prdGenerationSchema = z.object({
   idea: z.string().min(10, 'Please provide a detailed product idea (at least 10 characters)'),
-  category: z.string().min(1, 'Please select a category'),
-  targetAudience: z.string().min(3, 'Please specify your target audience'),
 })
 
 export const prdUpdateSchema = z.object({

@@ -1,142 +1,351 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { AnimatedTabs } from "@/components/ui/animated-tabs";
+import { PRDGrid } from "@/components/dashboard/prd-grid";
 import {
+  Star,
+  StarOff,
+  Trash2,
   FileText,
-  Sparkles,
   Zap,
-  Shield,
+  Sparkles,
   ArrowRight,
   LogOut,
-  Bot,
-  Keyboard,
-  Star,
-  Users,
-  TrendingUp,
-  CheckCircle,
-  Play,
-  Target,
-  Lightbulb,
-  Rocket,
-  Globe,
-  Award,
-  Clock,
-  BarChart3,
-  MessageSquare,
-  Palette,
-  Code,
-  Database,
-  Layers,
+
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+
+import { usePRDs } from "@/hooks/use-prds";
+import { useIdeas } from "@/hooks/use-ideas";
+import { SimpleAnimatedTabs } from "@/components/ui/simple-animated-tabs";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EnhancedSearch, SearchFilters } from "@/components/ui/enhanced-search";
+import { filterIdeas, getIdeaCategories, sortByRelevance } from "@/lib/search-utils";
+import { QuickSearch } from "@/components/ui/quick-search";
+import { Idea, IdeaStatus, IdeaPriority } from "@/types";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
-import { KeyboardShortcuts } from "@/components/ui/keyboard-shortcuts";
-import { useTheme } from "@/components/theme-provider";
+import { CollaborationRequestModal } from "@/components/ui/collaboration-request-modal";
+import { CollaboratorsManagement } from "@/components/ui/collaborators-management";
+import { SharedIdeasGrid } from "@/components/ui/shared-ideas-grid";
+
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from "@/components/ui/prompt-input";
+import { ArrowUp, Square } from "lucide-react";
+import { enhanceIdea } from "@/lib/gemini";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+
 import { motion } from "framer-motion";
-import { ShinyText } from "@/components/ui/shiny-text";
+import { IdeaVaultLogo } from "@/components/ui/idea-vault-logo";
+import { NotificationDropdown } from "@/components/ui/notification-dropdown";
+import { CollaborationNotificationBanner } from "@/components/ui/collaboration-notification-banner";
+
+// Helper function to capitalize first letter
+const capitalizeFirst = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1).replace('_', ' ');
+};
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading, signOut, isAuthenticated } = useAuth();
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("capture");
-  const { theme } = useTheme();
 
-  const features = [
-    {
-      icon: <Shield className="h-6 w-6 text-primary" />,
-      title: "Secure Idea Storage",
-      description:
-        "Safely store and organize all your product ideas in one place with enterprise-grade security.",
-      details: [
-        "End-to-end encryption",
-        "SOC 2 compliance",
-        "Regular security audits",
-        "GDPR compliant"
-      ],
-      color: "from-blue-500/10 to-cyan-500/10"
-    },
-    {
-      icon: <Sparkles className="h-6 w-6 text-primary" />,
-      title: "AI-Powered Prompt Generation",
-      description:
-        "Transform your raw ideas into high-quality Lovable, Bolt.new, and Cursor prompts using advanced AI.",
-      details: [
-        "Platform-specific optimization",
-        "Context-aware generation",
-        "Continuous learning",
-        "Quality assurance"
-      ],
-      color: "from-purple-500/10 to-pink-500/10"
-    },
-    {
-      icon: <Zap className="h-6 w-6 text-primary" />,
-      title: "Rapid Prompt Creation",
-      description:
-        "Quickly generate polished prompts in minutes, saving you valuable time and effort.",
-      details: [
-        "Sub-minute generation",
-        "Batch processing",
-        "Template library",
-        "Quick iterations"
-      ],
-      color: "from-yellow-500/10 to-orange-500/10"
-    },
-    {
-      icon: <Bot className="h-6 w-6 text-primary" />,
-      title: "Meet Nexi - Your AI Assistant",
-      description:
-        "Chat with Nexi, your intelligent AI companion that helps refine ideas and guides you through the PRD creation process.",
-      details: [
-        "Natural conversation",
-        "Contextual suggestions",
-        "24/7 availability",
-        "Learning from feedback"
-      ],
-      color: "from-green-500/10 to-emerald-500/10"
-    },
-  ];
+  const [promptText, setPromptText] = useState("");
+
+  // Dashboard functionality
+  const {
+    prds,
+    loading: prdsLoading,
+    error: prdsError,
+    refreshPRDs,
+    deletePRD,
+  } = usePRDs();
+  const {
+    ideas,
+    loading: ideasLoading,
+    createIdea,
+    updateIdea,
+    deleteIdea,
+  } = useIdeas();
+  const [activeTab, setActiveTab] = useState("ideas");
+
+  // Check URL parameters for tab selection and prompt
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam && ['ideas', 'shared', 'prds'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    // Handle prompt parameter from URL
+    const promptParam = urlParams.get('prompt');
+    if (promptParam) {
+      setPromptText(decodeURIComponent(promptParam));
+      // Auto-focus the prompt input after a short delay
+      setTimeout(() => {
+        const promptTextarea = document.querySelector('textarea[placeholder*="With Nexi"]') as HTMLTextAreaElement;
+        if (promptTextarea) {
+          promptTextarea.focus();
+          promptTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+      
+      // Clean up URL to remove the prompt parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('prompt');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, []);
+
+  // Search and filter state
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    query: "",
+    status: "all",
+    priority: "all",
+    category: "all",
+    dateRange: { from: null, to: null },
+    tags: [],
+    favorites: false,
+    recentlyModified: false,
+  });
+
+  // Phase 1 features state
+  const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
+
+
+  // Dashboard functions
+  const handleCreateIdea = async () => {
+    if (!promptText.trim()) {
+      return;
+    }
+
+    setIsEnhancing(true);
+
+    try {
+      // Enhance the idea using Gemini
+      const enhancedIdea = await enhanceIdea(promptText);
+      
+      // Create the idea with enhanced data
+      const newIdeaData = {
+        title: enhancedIdea.title,
+        description: enhancedIdea.description,
+        category: enhancedIdea.category,
+        status: "new" as IdeaStatus,
+        priority: enhancedIdea.priority as IdeaPriority,
+        market_size: enhancedIdea.market_size,
+        competition: enhancedIdea.competition,
+        notes: `Original Idea: "${promptText}"\n\nTarget Audience: ${enhancedIdea.target_audience}\n\nProblem: ${enhancedIdea.problem_statement}\n\nValue Proposition: ${enhancedIdea.value_proposition}\n\nKey Features: ${enhancedIdea.key_features.join(", ")}`,
+        attachments: [],
+        is_favorite: false
+      };
+
+      const newIdea = await createIdea(newIdeaData);
+      
+      toast({
+        title: "Idea Created Successfully!",
+        description: `"${enhancedIdea.title}" has been enhanced and added to your ideas.`,
+      });
+
+      // Navigate to the detailed idea page
+      navigate(`/idea/${newIdea.id}`);
+      
+      // Clear prompt
+      setPromptText("");
+    } catch (error) {
+      console.error("Error creating idea:", error);
+      
+      // Fallback: create basic idea
+      try {
+        const basicIdeaData = {
+          title: promptText.slice(0, 100), // Use first 100 chars as title
+          description: promptText,
+          category: "general",
+          status: "new" as IdeaStatus,
+          priority: "medium" as IdeaPriority,
+          market_size: "Unknown",
+          competition: "Unknown", 
+          notes: `Original Idea: "${promptText}"`,
+          attachments: [],
+          is_favorite: false
+        };
+
+        const newIdea = await createIdea(basicIdeaData);
+        
+        toast({
+          title: "Idea Created!",
+          description: "Your idea has been saved. AI enhancement failed, but you can edit it manually.",
+        });
+
+        // Navigate to the detailed idea page
+        navigate(`/idea/${newIdea.id}`);
+        
+        // Clear prompt
+        setPromptText("");
+      } catch (fallbackError) {
+        toast({
+          title: "Error Creating Idea",
+          description: "Failed to create idea. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleGeneratePRD = async (idea: Idea) => {
+    navigate(`/generate?ideaId=${idea.id}`);
+  };
+
+  const toggleFavorite = async (idea: Idea) => {
+    await updateIdea(idea.id, { is_favorite: !idea.is_favorite });
+  };
+
+  const handleDeleteIdea = async (ideaId: string) => {
+    await deleteIdea(ideaId);
+  };
+
+  const handleNewIdea = () => {
+    const promptInput = document.querySelector('textarea[placeholder*="With Nexi"]') as HTMLTextAreaElement;
+    if (promptInput) {
+      promptInput.focus();
+      promptInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  // Filter ideas based on search criteria
+  const filteredIdeas = filterIdeas(ideas, searchFilters);
+  const ideaCategories = getIdeaCategories(ideas);
+
+  const handlePromptSubmit = () => {
+    if (isAuthenticated) {
+      handleCreateIdea();
+    } else {
+      if (promptText.trim()) {
+        navigate(`/signup?prompt=${encodeURIComponent(promptText.trim())}`);
+      } else {
+        navigate("/signup");
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handlePromptSubmit();
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="bg-background border-b">
+      <div className="min-h-screen w-full relative overflow-hidden">
+        {/* Background SVG */}
+        <div className="fixed inset-0 z-0">
+          <svg 
+            className="w-full h-full object-cover"
+            xmlns="http://www.w3.org/2000/svg" 
+            width="2596" 
+            height="2600" 
+            viewBox="0 200 2596 2600" 
+            fill="none" 
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <g filter="url(#filter0_f)">
+              <rect x="2143" y="455" width="1690" height="1690" rx="710.009" transform="rotate(90 2143 455)" fill="#84AE92" opacity="0.65" />
+            </g>
+            <g filter="url(#filter1_f)">
+              <rect x="2126" y="474.675" width="1655.58" height="1653.6" rx="710.009" transform="rotate(90 2126 474.675)" fill="#B9D4AA" opacity="0.65" />
+            </g>
+            <g filter="url(#filter_common_f)">
+              <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#5A827E" />
+              <rect x="2057" y="576.304" width="1452.32" height="1515.8" rx="710.009" transform="rotate(90 2057 576.304)" fill="#FAFFCA" />
+              <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#B9D4AA" opacity="0.65" />
+            </g>
+            <g filter="url(#filter5_f)">
+              <rect x="1858" y="766.034" width="1084.79" height="1117.93" rx="483.146" transform="rotate(90 1858 766.034)" fill="#84AE92" />
+            </g>
+            <g filter="url(#filter6_f)">
+              <rect x="1779" y="698.622" width="1178.25" height="962.391" rx="481.196" transform="rotate(90 1779 698.622)" fill="#5A827E" />
+            </g>
+            <defs>
+              <filter id="filter0_f" x="0.074" y="2.074" width="2595.85" height="2595.85" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                <feGaussianBlur stdDeviation="140" />
+              </filter>
+              <filter id="filter1_f" x="250.311" y="252.587" width="2097.78" height="2099.76" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                <feGaussianBlur stdDeviation="60" />
+              </filter>
+              <filter id="filter_common_f" x="393" y="428" width="1812" height="1748" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                <feGaussianBlur stdDeviation="58" />
+              </filter>
+              <filter id="filter5_f" x="443.964" y="469.927" width="1710.14" height="1677" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                <feGaussianBlur stdDeviation="115" />
+              </filter>
+              <filter id="filter6_f" x="520.502" y="402.515" width="1554.6" height="1770.46" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                <feGaussianBlur stdDeviation="115" />
+              </filter>
+            </defs>
+          </svg>
+        </div>
+        
+        {/* Dark overlay for better text readability */}
+        <div className="fixed inset-0 z-10 bg-black/40"></div>
+        
+        <header className="relative z-20 bg-transparent">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-2">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <Skeleton className="h-8 w-32" />
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-8 w-8 rounded-lg bg-white/10 border border-white/20" />
+                <Skeleton className="h-6 w-32 bg-white/10 border border-white/20" />
               </div>
               <div className="flex items-center space-x-4">
-                <Skeleton className="h-8 w-8 rounded-full" />
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-20 bg-white/10 border border-white/20" />
+                <Skeleton className="h-8 w-24 bg-white/10 border border-white/20" />
               </div>
             </div>
           </div>
         </header>
-        <main className="flex flex-col items-center justify-center flex-1 py-12">
-          <Skeleton className="h-12 w-64 mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-6xl">
-            {[...Array(4)].map((_, i) => (
-              <Card className="bg-card" key={i}>
-                <CardHeader>
-                  <Skeleton className="h-8 w-8 mb-2 rounded-full" />
-                  <Skeleton className="h-6 w-32 mb-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-3/4" />
-                </CardContent>
-              </Card>
-            ))}
+        <main className="relative z-20 flex flex-col items-center justify-center flex-1 py-12">
+          <div className="text-center space-y-6">
+            <Skeleton className="h-16 w-96 bg-white/10 border border-white/20 mx-auto" />
+            <Skeleton className="h-6 w-80 bg-white/10 border border-white/20 mx-auto" />
+            <Skeleton className="h-12 w-64 bg-white/10 border border-white/20 mx-auto mt-8" />
           </div>
         </main>
       </div>
@@ -144,640 +353,558 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen w-full relative overflow-x-hidden" style={{
-      background:
-        "linear-gradient(135deg, #18181b 0%, #23272f 60%, #101014 100%)",
-      backgroundColor: "#101014",
-    }}>
-      {/* Glassy, glossy, dark overlays for depth and shine */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-slate-400/5 to-black/60" style={{backdropFilter: 'blur(16px)'}}></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[40vw] bg-gradient-to-br from-slate-200/10 via-slate-400/10 to-transparent rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute bottom-0 right-0 w-[40vw] h-[30vw] bg-gradient-to-tr from-slate-500/10 via-slate-700/10 to-transparent rounded-full blur-2xl opacity-20"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+    <>
+      <style>{`
+        @keyframes breathe {
+          0%, 100% {
+            transform: scale(1.85);
+          }
+          50% {
+            transform: scale(1.50);
+          }
+        }
+        
+        html {
+          scroll-behavior: smooth;
+        }
+      `}</style>
+      <div className="min-h-screen w-full relative overflow-hidden scroll-smooth">
+      {/* Background SVG */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 scale-125 transform"
+          style={{
+            animation: 'breathe 8s ease-in-out infinite'
+          }}
+        >
+          <svg 
+            className="w-full h-full object-cover"
+            xmlns="http://www.w3.org/2000/svg" 
+            width="4000" 
+            height="4000" 
+            viewBox="-900 -900 4400 4400" 
+            fill="none" 
+            preserveAspectRatio="xMidYMid slice"
+          >
+          <g filter="url(#filter0_f)">
+            <rect x="2143" y="455" width="1690" height="1690" rx="710.009" transform="rotate(90 2143 455)" fill="#84AE92" opacity="0.65" />
+          </g>
+          <g filter="url(#filter1_f)">
+            <rect x="2126" y="474.675" width="1655.58" height="1653.6" rx="710.009" transform="rotate(90 2126 474.675)" fill="#B9D4AA" opacity="0.65" />
+          </g>
+          <g filter="url(#filter_common_f)">
+            <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#5A827E" />
+            <rect x="2057" y="576.304" width="1452.32" height="1515.8" rx="710.009" transform="rotate(90 2057 576.304)" fill="#FAFFCA" />
+            <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#B9D4AA" opacity="0.65" />
+          </g>
+          <g filter="url(#filter5_f)">
+            <rect x="1858" y="766.034" width="1084.79" height="1117.93" rx="483.146" transform="rotate(90 1858 766.034)" fill="#84AE92" />
+          </g>
+          <g filter="url(#filter6_f)">
+            <rect x="1779" y="698.622" width="1178.25" height="962.391" rx="481.196" transform="rotate(90 1779 698.622)" fill="#5A827E" />
+          </g>
+          <defs>
+            <filter id="filter0_f" x="0.074" y="2.074" width="2595.85" height="2595.85" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="140" />
+            </filter>
+            <filter id="filter1_f" x="250.311" y="252.587" width="2097.78" height="2099.76" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="60" />
+            </filter>
+            <filter id="filter_common_f" x="393" y="428" width="1812" height="1748" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="58" />
+            </filter>
+            <filter id="filter5_f" x="443.964" y="469.927" width="1710.14" height="1677" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="115" />
+            </filter>
+            <filter id="filter6_f" x="520.502" y="402.515" width="1554.6" height="1770.46" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+              <feGaussianBlur stdDeviation="115" />
+            </filter>
+          </defs>
+        </svg>
+        </div>
       </div>
+      
+      {/* Gradient overlay for smoother fade like Lovable */}
+      <div className="fixed inset-0 z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/25"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/1 via-transparent to-black/15"></div>
+        <div className="absolute inset-0" style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.2) 100%)'
+        }}></div>
+      </div>
+      
       {/* Header */}
-      <header className="bg-transparent border-b border-white/10 backdrop-blur-md sticky top-0 z-50">
+      <header className="relative z-20 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-1">
-              <img
-                src={theme === "dark" ? "https://i.postimg.cc/DwVdb9NB/image.png" : "/icon.png"}
-                alt="IdeaVault Icon"
-                className="h-8 w-auto"
-              />
-              <span className="text-xl font-bold text-foreground">
-                IdeaVault
-              </span>
+            <div className="flex items-center space-x-3">
+              <div 
+                className="cursor-pointer hover:scale-105 transition-transform duration-200"
+                onClick={() => navigate("/")}
+              >
+                <IdeaVaultLogo 
+                  size="lg" 
+                  variant="light" 
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsShortcutsOpen(true)}
-                title="Keyboard shortcuts (Ctrl+/)"
-              >
-                <Keyboard className="h-4 w-4 mr-2" />
-                Shortcuts
-              </Button>
+
               {isAuthenticated ? (
                 <>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-white/70">
                     {user?.email}
                   </span>
-                  <InteractiveHoverButton
-                    text="Dashboard"
+                  <Button 
                     variant="ghost"
-                    onClick={() => navigate("/dashboard")}
-                    className="px-4 py-2"
-                  />
-                  <Button variant="ghost" size="sm" onClick={signOut}>
+                    size="sm" 
+                    onClick={signOut}
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
                   </Button>
                 </>
               ) : (
                 <>
-                  <InteractiveHoverButton
-                    text="Sign In"
+                  <Button
                     variant="ghost"
                     onClick={() => navigate("/login")}
-                    className="px-4 py-2"
-                  />
-                  <InteractiveHoverButton
-                    text="Get Started"
-                    variant="default"
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
                     onClick={() => navigate("/signup")}
-                    className="px-4 py-2"
-                  />
+                    className="bg-white text-gray-900 hover:bg-gray-100"
+                  >
+                    Get Started
+                  </Button>
                 </>
               )}
             </div>
           </div>
         </div>
       </header>
-      {/* Hero Section */}
-      <section className="py-24 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+
+      {/* Quick Search Dialog */}
+      {isAuthenticated && (
+        <QuickSearch
+          isOpen={isQuickSearchOpen}
+          onOpenChange={setIsQuickSearchOpen}
+          ideas={ideas}
+          prds={prds}
+          onCreateIdea={handleNewIdea}
+          onCreatePRD={() => navigate("/generate")}
+        />
+      )}
+
+      {/* Main Content */}
+      <main className="relative z-20 px-4 sm:px-6 lg:px-8 py-8 max-w-full mx-auto">
+        {!isAuthenticated ? (
+          /* Landing Page Content for Non-Authenticated Users */
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+            <div className="text-center max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                <ShinyText
-                  text="Turn Your Ideas into Powerful Marketable Lovable, Bolt.new, and Cursor Prompts"
-                  speed={3}
-                  className="[text-shadow:0_1px_2px_rgba(255,255,255,0.2)]"
-                />
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                  Build something
+                  <span className="ml-4 inline-flex items-center">
+                    <IdeaVaultLogo 
+                      size="xl" 
+                      variant="gradient" 
+                      className="mr-2"
+                    />
+                    <span className="bg-gradient-to-r from-[#5A827E] via-[#84AE92] to-[#B9D4AA] bg-clip-text text-transparent">
+                      IdeaVault
+                    </span>
+                  </span>
               </h1>
+                <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+                  Create apps and websites by chatting with AI
+                </p>
             </motion.div>
-            <motion.p
-              className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed"
+
+              <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              Securely store and organize your product ideas, then generate
-              comprehensive and effective prompts in minutes using AI. Perfect
-              for solo founders and entrepreneurs.
-            </motion.p>
-            <a
-              href="https://www.producthunt.com/products/ideavault-store-ideas-make-prompts?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-ideavault&#0045;store&#0045;ideas&#0045;make&#0045;prompts"
-              target="_blank"
-              style={{
-                marginBottom: "2rem",
-                display: "inline-block",
-                margin: "0 auto",
-              }}
-            >
-              <img
-                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=972541&theme=light&t=1748766981827"
-                alt="IdeaVault&#0032;&#0045;&#0032;Store&#0032;Ideas&#0032;&#0038;&#0032;Make&#0032;Prompts - Your&#0032;AI&#0045;powered&#0032;idea&#0032;companion | Product Hunt"
-                style={{ width: "250px", height: "54px" }}
-                width="250"
-                height="54"
-              />
-            </a>
+                className="max-w-4xl mx-auto mb-8"
+              >
+                <div className="bg-gray-800/50 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-white/10">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-white/10 rounded-xl p-3">
+                      <Sparkles className="h-6 w-6 text-white" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Ask IdeaVault to create a web app that..."
+                      className="flex-1 bg-transparent text-white placeholder-white/60 text-lg border-none outline-none"
+                      value={promptText}
+                      onChange={(e) => setPromptText(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                    <div className="flex items-center space-x-2">
+                      <button className="bg-white/10 hover:bg-white/20 text-white/60 px-3 py-2 rounded-lg text-sm border border-white/20 transition-colors">
+                        🌐 Public
+                      </button>
+                      <button 
+                        className="bg-white text-gray-900 hover:bg-gray-100 p-3 rounded-xl transition-colors"
+                        onClick={handlePromptSubmit}
+                      >
+                        <ArrowRight className="h-5 w-5" />
+                      </button>
+          </div>
+        </div>
+          </div>
+              </motion.div>
+
             <motion.div
-              className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {isAuthenticated ? (
-                <InteractiveHoverButton
-                  text="Go to Dashboard"
-                  variant="default"
-                  onClick={() => navigate("/dashboard")}
-                  className="mb-4 px-8 py-4 text-lg shadow-lg hover:shadow-xl"
-                />
-              ) : (
-                <>
-                  <InteractiveHoverButton
-                    text="Start Generating PRDs"
-                    variant="default"
-                    onClick={() => navigate("/signup")}
-                    className="px-8 py-4 text-lg shadow-lg hover:shadow-xl"
-                  />
-                  <InteractiveHoverButton
-                    text="Sign In"
+                className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
+              >
+                <Button
+                  onClick={() => {
+                    if (promptText.trim()) {
+                      navigate(`/signup?prompt=${encodeURIComponent(promptText.trim())}`);
+                    } else {
+                      navigate("/signup");
+                    }
+                  }}
+                  className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 text-lg font-semibold shadow-lg"
+                >
+                  Start Building
+                </Button>
+                <Button
                     variant="outline"
-                    onClick={() => navigate("/login")}
-                    className="px-8 py-4 text-lg"
-                  />
-                </>
-              )}
+                  onClick={() => {
+                    if (promptText.trim()) {
+                      navigate(`/login?prompt=${encodeURIComponent(promptText.trim())}`);
+                    } else {
+                      navigate("/login");
+                    }
+                  }}
+                  className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold"
+                >
+                  Sign In
+                </Button>
             </motion.div>
           </div>
         </div>
-      </section>
-      {/* Features Section */}
-      <section className="py-20 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-black/60 border border-white/10 rounded-2xl p-10 shadow-lg backdrop-blur-xl text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground mb-4 relative inline-block">
-              Why Choose IdeaVault?
-              <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-primary/30 rounded-full"></span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Everything you need to create professional PRDs quickly and
-              efficiently
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="group border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 transform-gpu bg-black/60 backdrop-blur-xl h-full relative overflow-hidden">
-                  {/* Background gradient */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <CardHeader className="relative z-10">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors group-hover:scale-110 transform duration-300">
-                      {feature.icon}
-                    </div>
-                    <CardTitle className="text-xl text-foreground group-hover:text-primary transition-colors duration-300">
-                      {feature.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="relative z-10 flex-1 flex flex-col">
-                    <p className="text-muted-foreground mb-4 group-hover:text-foreground transition-colors duration-300">
-                      {feature.description}
-                    </p>
-                    <div className="mt-auto">
-                      <ul className="space-y-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
-                        {feature.details.map((detail, detailIndex) => (
-                          <li key={detailIndex} className="flex items-center text-sm text-muted-foreground">
-                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                            {detail}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* Testimonials Section */}
-      <section className="py-20 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-black/60 border border-white/10 rounded-2xl p-10 shadow-lg backdrop-blur-xl text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4 relative inline-block">
-              What Our Users Say
-              <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-primary/30 rounded-full"></span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of satisfied users who've transformed their ideas into reality
+        ) : (
+          /* Dashboard Content for Authenticated Users */
+          <>
+            {/* Centered Prompt Input Section */}
+            <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6 mb-20">
+              <div className="space-y-4">
+                <h2 className="text-4xl md:text-5xl font-bold text-[#FAFFCA]">Let's Build Your Next Billion Dollar Idea</h2>
+                <p className="text-[#B9D4AA] text-lg ">
+                  Tell Nexi about your product idea and Nexi will help structure and enhance it
             </p>
           </div>
           
-          {/* Auto-scrolling testimonials */}
-          <div className="relative overflow-hidden">
-            <div className="flex auto-scroll">
-              {/* First set of testimonials */}
-              {[
-                {
-                  name: "Sarah Chen",
-                  role: "Product Manager at TechCorp",
-                  content: "IdeaVault has revolutionized how I create PRDs. What used to take days now takes hours, and the quality is consistently excellent.",
-                  rating: 5,
-                  avatar: "SC"
-                },
-                {
-                  name: "Marcus Rodriguez",
-                  role: "Solo Founder",
-                  content: "As a solo founder, IdeaVault is my secret weapon. The AI-powered PRDs help me articulate my vision clearly to developers.",
-                  rating: 5,
-                  avatar: "MR"
-                },
-                {
-                  name: "Emily Watson",
-                  role: "Startup CEO",
-                  content: "The collaboration features are game-changing. My team can now work together seamlessly on product requirements.",
-                  rating: 5,
-                  avatar: "EW"
-                },
-                {
-                  name: "David Kim",
-                  role: "Engineering Lead",
-                  content: "The PRDs generated by IdeaVault are incredibly detailed and actionable. It's like having a senior PM on the team.",
-                  rating: 5,
-                  avatar: "DK"
-                }
-              ].concat([
-                {
-                  name: "Sarah Chen",
-                  role: "Product Manager at TechCorp",
-                  content: "IdeaVault has revolutionized how I create PRDs. What used to take days now takes hours, and the quality is consistently excellent.",
-                  rating: 5,
-                  avatar: "SC"
-                },
-                {
-                  name: "Marcus Rodriguez",
-                  role: "Solo Founder",
-                  content: "As a solo founder, IdeaVault is my secret weapon. The AI-powered PRDs help me articulate my vision clearly to developers.",
-                  rating: 5,
-                  avatar: "MR"
-                },
-                {
-                  name: "Emily Watson",
-                  role: "Startup CEO",
-                  content: "The collaboration features are game-changing. My team can now work together seamlessly on product requirements.",
-                  rating: 5,
-                  avatar: "EW"
-                },
-                {
-                  name: "David Kim",
-                  role: "Engineering Lead",
-                  content: "The PRDs generated by IdeaVault are incredibly detailed and actionable. It's like having a senior PM on the team.",
-                  rating: 5,
-                  avatar: "DK"
-                }
-              ]).map((testimonial, index) => (
-                <div key={index} className="flex-none w-96 mx-4">
-                  <div className="h-full border border-white/10 bg-gradient-to-br from-black/80 to-black/60 backdrop-blur-xl shadow-2xl rounded-xl transition-all duration-300 hover:scale-105 hover:border-primary/20">
-                    <div className="flex flex-col h-full p-6">
-                      {/* Quote Icon */}
-                      <div className="mb-4">
-                        <svg className="w-6 h-6 text-primary/60" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4v10h-10z"/>
-                        </svg>
-                      </div>
-                      
-                      {/* Testimonial Content */}
-                      <div className="flex-1">
-                        <p className="text-base text-foreground font-medium mb-4 leading-relaxed italic">
-                          "{testimonial.content}"
-                        </p>
-                        
-                        {/* Star Rating */}
-                        <div className="flex items-center gap-1 mb-4">
-                          {[...Array(testimonial.rating)].map((_, i) => (
-                            <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* User Info */}
-                      <div className="flex items-center gap-3 pt-3 border-t border-white/10">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-primary/20 flex items-center justify-center ring-2 ring-primary/20">
-                          <span className="text-sm font-bold text-primary">
-                            {testimonial.avatar}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground text-sm">{testimonial.name}</p>
-                          <p className="text-xs text-muted-foreground">{testimonial.role}</p>
-                        </div>
-                      </div>
+              <div className="w-full max-w-4xl">
+                <PromptInput
+                  value={promptText}
+                  onValueChange={setPromptText}
+                  isLoading={isEnhancing}
+                  onSubmit={handleCreateIdea}
+                  className="w-full bg-[#1C1C1C]/80 backdrop-blur-md border-[#5A827E] text-lg min-h-[120px]"
+                  maxHeight={400}
+                >
+                  <PromptInputTextarea 
+                    animatedPlaceholder={{
+                      texts: [
+                        "create a mobile app that helps students find study groups nearby",
+                        "build a SaaS platform for small businesses to manage their inventory", 
+                        "design an AI-powered tool that creates personalized workout plans",
+                        "develop a web app that connects freelancers with local businesses",
+                        "invent a smart home device that optimizes energy consumption",
+                        "launch a social platform for pet owners to arrange playdates",
+                        "make an educational app that gamifies learning coding",
+                        "start a marketplace for sustainable and eco-friendly products",
+                        "help me brainstorm a revolutionary tech startup idea",
+                        "analyze the market potential for my product concept"
+                      ],
+                      prefix: "With Nexi "
+                    }}
+                    className="text-[#FAFFCA] placeholder-[#B9D4AA]/80 bg-transparent"
+                  />
+                  <PromptInputActions className="justify-end pt-2">
+                    <PromptInputAction
+                      tooltip={isEnhancing ? "AI is enhancing your idea..." : "Create idea with AI enhancement"}
+                    >
+                      <Button
+                        variant="default"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={handleCreateIdea}
+                        disabled={!promptText.trim() || isEnhancing}
+                      >
+                        {isEnhancing ? (
+                          <Square className="size-5 fill-current animate-pulse" />
+                        ) : (
+                          <ArrowUp className="size-5" />
+                        )}
+                      </Button>
+                    </PromptInputAction>
+                  </PromptInputActions>
+                </PromptInput>
+                
+                {isEnhancing && (
+                  <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-md">
+                    <div className="flex items-center justify-center gap-2 text-sm text-white/70">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      AI is analyzing and enhancing your idea...
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </div>
+                )}
           </div>
-        </div>
-      </section>
-      {/* How It Works Section */}
-<section className="py-20 z-10">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="bg-[#1f1f23] backdrop-blur-none border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12 max-w-4xl mx-auto relative z-10">
-      <h2 className="text-3xl font-bold text-foreground mb-4 relative inline-block text-center w-full">
-        How It Works
-        <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-primary/30 rounded-full"></span>
-      </h2>
-      <p className="text-xl text-muted-foreground text-center mb-8">
-        Transform your ideas into professional PRDs in just 3 simple steps
-      </p>
-            <AnimatedTabs
-              tabs={[
-                {
-                  id: "capture",
-                  label: "Capture Ideas",
-                  icon: <Lightbulb className="h-4 w-4" />,
-                  content: (
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground mb-4">
-                          Capture & Organize Your Ideas
-                        </h3>
-                        <p className="text-muted-foreground mb-6">
-                          Securely store all your product ideas in one centralized location. Add descriptions, tags, and collaborate with team members to refine your concepts.
-                        </p>
-                        <ul className="space-y-2">
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Secure cloud storage
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Team collaboration
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Smart organization
-                          </li>
-                        </ul>
-                      </div>
-                      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg p-8 border border-white/10">
-                        <div className="space-y-4">
-                          <div className="bg-[#23272f] rounded-lg p-4 shadow-sm">
-                            <div className="flex items-center mb-2">
-                              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                              <span className="font-medium text-foreground">Mobile App Idea</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              A fitness tracking app with social features...
-                            </p>
-                          </div>
-                          <div className="bg-[#23272f] rounded-lg p-4 shadow-sm">
-                            <div className="flex items-center mb-2">
-                              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                              <span className="font-medium text-foreground">SaaS Platform</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Project management tool for remote teams...
-                            </p>
-                          </div>
+          </div>
+          
+            {/* Workspace Section */}
+            <div className="bg-[#1C1C1C] rounded-2xl p-8 mx-4 space-y-6 min-h-screen border-t-4 border-[#5A827E]">
+              <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-white">Your Workspace</h1>
+                <div className="flex items-center gap-4">
+                  {/* Collaboration Notifications */}
+                  <NotificationDropdown />
+                  
+                  {/* Sign Out Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={signOut}
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
                         </div>
                       </div>
-                    </div>
-                  )
-                },
-                {
-                  id: "generate",
-                  label: "Generate PRDs",
-                  icon: <Rocket className="h-4 w-4" />,
-                  content: (
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground mb-4">
-                          AI-Powered PRD Generation
-                        </h3>
-                        <p className="text-muted-foreground mb-6">
-                          Our advanced AI analyzes your ideas and generates comprehensive, professional PRDs tailored for Lovable, Bolt.new, and Cursor platforms.
-                        </p>
-                        <ul className="space-y-2">
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Platform-specific prompts
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Comprehensive requirements
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Technical specifications
-                          </li>
-                        </ul>
-                      </div>
-                      <div className="bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-lg p-8 border border-white/10">
-                        <div className="bg-[#23272f] rounded-lg p-4 shadow-sm">
-                          <div className="flex items-center mb-3">
-                            <Bot className="h-5 w-5 text-primary mr-2" />
-                            <span className="font-medium text-foreground">Generated PRD</span>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">User Stories:</span>
-                              <span className="text-green-500">✓ Complete</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Technical Specs:</span>
-                              <span className="text-green-500">✓ Complete</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">UI/UX Guidelines:</span>
-                              <span className="text-green-500">✓ Complete</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                },
-                {
-                  id: "deploy",
-                  label: "Deploy & Iterate",
-                  icon: <Target className="h-4 w-4" />,
-                  content: (
-                    <div className="grid md:grid-cols-2 gap-8 items-center">
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground mb-4">
-                          Deploy & Iterate Quickly
-                        </h3>
-                        <p className="text-muted-foreground mb-6">
-                          Use your generated PRDs directly in your favorite development platforms. Track progress, gather feedback, and iterate rapidly.
-                        </p>
-                        <ul className="space-y-2">
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            One-click deployment
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Progress tracking
-                          </li>
-                          <li className="flex items-center text-muted-foreground">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            Continuous iteration
-                          </li>
-                        </ul>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-lg p-8 border border-white/10">
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="bg-[#23272f] rounded-lg p-3 text-center shadow-sm">
-                            <div className="w-8 h-8 bg-blue-500/10 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                              <Code className="h-4 w-4 text-blue-500" />
-                            </div>
-                            <span className="text-xs font-medium text-foreground">Lovable</span>
-                          </div>
-                          <div className="bg-[#23272f] rounded-lg p-3 text-center shadow-sm">
-                            <div className="w-8 h-8 bg-green-500/10 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                              <Zap className="h-4 w-4 text-green-500" />
-                            </div>
-                            <span className="text-xs font-medium text-foreground">Bolt.new</span>
-                          </div>
-                          <div className="bg-[#23272f] rounded-lg p-3 text-center shadow-sm">
-                            <div className="w-8 h-8 bg-purple-500/10 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                              <Palette className="h-4 w-4 text-purple-500" />
-                            </div>
-                            <span className="text-xs font-medium text-foreground">Cursor</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                }
-              ]}
+                      
+            {/* Collaboration Notification Banner */}
+            <CollaborationNotificationBanner />
+            
+            <SimpleAnimatedTabs
               activeTab={activeTab}
               onTabChange={setActiveTab}
+              tabs={[
+                {
+                  id: "ideas",
+                  label: "Ideas",
+                  icon: <FileText className="h-4 w-4" />,
+                  content: (
+                    <div className="space-y-6">
+                      {/* Enhanced Search Component */}
+                      <EnhancedSearch
+                        onFiltersChange={setSearchFilters}
+                        placeholder="Search ideas by title, description, category..."
+                        categories={ideaCategories}
+                        className="mb-6 bg-[#5A827E]/30 border-[#84AE92]"
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredIdeas.map((idea) => (
+                          <Card
+                            key={idea.id}
+                            className="group relative cursor-pointer hover:shadow-xl transition-all duration-300 ease-out flex flex-col h-full min-h-[280px] hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border border-[#5A827E] hover:border-[#84AE92] bg-[#5A827E]/20 backdrop-blur-md"
+                            onClick={() => navigate(`/idea/${idea.id}`)}
+                          >
+                            {/* Hover Background Gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#B9D4AA]/10 via-transparent to-[#84AE92]/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            {/* Subtle Border Glow */}
+                            <div className="absolute inset-0 rounded-lg border border-[#B9D4AA]/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                            <CardHeader className="pb-2 relative z-10">
+                              <div className="flex justify-between items-start">
+                                <CardTitle className="text-lg text-white group-hover:text-[#B9D4AA] transition-colors duration-300">{idea.title}</CardTitle>
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-[#B9D4AA] hover:text-[#FAFFCA] hover:bg-[#84AE92]/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(idea);
+                                    }}
+                                  >
+                                    {idea.is_favorite ? (
+                                      <Star className="h-4 w-4 text-yellow-400" />
+                                    ) : (
+                                      <StarOff className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-red-400 hover:text-red-300 hover:bg-[#84AE92]/20"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="bg-gray-900/95 backdrop-blur-md border-white/20">
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-white">Delete Idea</AlertDialogTitle>
+                                        <AlertDialogDescription className="text-white/70">
+                                          Are you sure you want to delete this idea? This
+                                          action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel className="bg-white/10 text-white border-white/20 hover:bg-white/20">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteIdea(idea.id)}
+                                          className="bg-red-600 text-white hover:bg-red-700"
+                                        >
+                                          Delete
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                      </div>
+                            </div>
+                            </CardHeader>
+                            <CardContent className="flex flex-col flex-1 relative z-10">
+                        <div className="flex-1">
+                                <p className="text-sm text-white/80 line-clamp-3 group-hover:text-white transition-colors duration-300">
+                                  {idea.description}
+                            </p>
+                          </div>
+                              <div className="mt-auto space-y-4">
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
+                                    {capitalizeFirst(idea.status)}
+                                  </span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
+                                    {capitalizeFirst(idea.priority)}
+                                  </span>
+                                  {idea.is_shared && (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/30 text-blue-200 group-hover:bg-blue-500/40 group-hover:scale-105 transition-all duration-300">
+                                      <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                      </svg>
+                                      Shared ({idea.permission_level})
+                                    </span>
+                                  )}
+                            </div>
+                                <div className="flex flex-col gap-4 mt-6">
+                                  <InteractiveHoverButton
+                                    text="Generate PRD for AI Tools"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleGeneratePRD(idea);
+                                    }}
+                                    className="text-sm px-4 py-3 w-full min-h-[44px] flex items-center justify-center font-medium border-white/30 text-white hover:bg-white/10"
+                                  />
+                                  <div
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full flex gap-3"
+                                  >
+                                    <CollaborationRequestModal
+                                      idea={idea}
+                                      trigger={
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium text-white/70 hover:text-white hover:bg-white/10"
+                                        >
+                                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                          </svg>
+                                          Invite
+                                        </Button>
+                                      }
+                                    />
+                                    <CollaboratorsManagement
+                                      idea={idea}
+                                      trigger={
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="flex-1 text-sm px-4 py-2.5 min-h-[40px] flex items-center justify-center gap-2 font-medium text-white/70 hover:text-white hover:bg-white/10"
+                                        >
+                                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                          </svg>
+                                          Manage
+                                        </Button>
+                                      }
+                                    />
+                          </div>
+                        </div>
+                </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  id: "shared",
+                  label: "Shared with Me",
+                  icon: <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>,
+                  content: (
+                    <SharedIdeasGrid />
+                  )
+                },
+                                 {
+                   id: "prds",
+                   label: "PRDs",
+                   icon: <Zap className="h-4 w-4" />,
+                  content: (
+                     <PRDGrid 
+                       prds={prds}
+                       deletePRD={deletePRD}
+                     />
+                   )
+                 }
+              ]}
             />
           </div>
-        </div>
-      </section>
-      {/* CTA Section */}
-      <section className="py-20 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-black/60 border border-white/10 rounded-2xl p-12 text-center shadow-lg backdrop-blur-xl">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Ready to Streamline Your PRD Process?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Join thousands of product managers who are saving time and
-              creating better PRDs with AI.
-            </p>
-            <div className="flex justify-center">
-              {isAuthenticated ? (
-                <InteractiveHoverButton
-                  text="Go to Dashboard"
-                  variant="default"
-                  onClick={() => navigate("/dashboard")}
-                  className="px-8 py-4 text-lg shadow-md hover:shadow-lg"
+          </>
+        )}
+      </main>
+      
+
+      
+      {/* Footer - At bottom of page content */}
+      <footer className="mt-16 py-8 bg-black border-t border-[#5A827E]/30 transition-all duration-300">
+        <div className="max-w-full mx-auto px-8">
+                      <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400 space-y-4 md:space-y-0">
+              <div className="flex items-center">
+                <IdeaVaultLogo 
+                  size="sm" 
+                  variant="dark" 
                 />
-              ) : (
-                <InteractiveHoverButton
-                  text="Get Started"
-                  variant="default"
-                  onClick={() => navigate("/signup")}
-                  className="px-8 py-4 text-lg shadow-md hover:shadow-lg"
-                />
-              )}
             </div>
+            <div className="flex items-center space-x-6">
+              <span>© 2024 IdeaVault. All rights reserved.</span>
+              <div className="flex items-center space-x-4">
+                <span className="hover:text-[#B9D4AA] cursor-pointer transition-colors duration-300">Privacy</span>
+                <span className="hover:text-[#B9D4AA] cursor-pointer transition-colors duration-300">Terms</span>
+                <span className="hover:text-[#B9D4AA] cursor-pointer transition-colors duration-300">Contact</span>
           </div>
         </div>
-      </section>
-      {/* FAQ Section */}
-      <section className="py-20 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-black/60 border border-white/10 rounded-2xl p-10 shadow-lg backdrop-blur-xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-foreground mb-4 relative inline-block">
-                Frequently Asked Questions
-                <span className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-1/2 h-1 bg-primary/30 rounded-full"></span>
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                Everything you need to know about IdeaVault
-              </p>
             </div>
-            <Accordion type="single" collapsible className="space-y-4">
-              <AccordionItem value="what-is-ideavault" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  What is IdeaVault and how does it work?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  IdeaVault is an AI-powered platform that helps you transform raw product ideas into comprehensive,
-                  professional PRDs (Product Requirements Documents). Simply input your idea, and our AI generates
-                  detailed prompts optimized for platforms like Lovable, Bolt.new, and Cursor.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="platforms-supported" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  Which development platforms are supported?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  We currently support Lovable, Bolt.new, and Cursor. Each platform receives specially optimized
-                  prompts that match their specific requirements and capabilities. We're constantly adding support
-                  for new platforms based on user feedback.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="collaboration" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  Can I collaborate with my team on ideas?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Yes! IdeaVault includes powerful collaboration features. You can share ideas with team members,
-                  work together on refining concepts, and manage permissions. Team members can comment, suggest
-                  improvements, and contribute to the PRD generation process.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="security" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  How secure is my data?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Security is our top priority. All data is encrypted in transit and at rest using industry-standard
-                  encryption. We're SOC 2 compliant and follow strict data protection protocols. Your ideas and
-                  generated PRDs are never shared with third parties or used to train AI models.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="ai-quality" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  How accurate and detailed are the AI-generated PRDs?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Our AI is trained on thousands of successful PRDs and continuously improved based on user feedback.
-                  The generated PRDs include user stories, technical specifications, UI/UX guidelines, and acceptance
-                  criteria. While the AI provides an excellent starting point, we recommend reviewing and customizing
-                  the output to match your specific needs.
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="support" className="border rounded-lg px-6 bg-background/50">
-                <AccordionTrigger className="text-left hover:no-underline">
-                  What kind of support do you provide?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  We provide email support for all users, with priority support for Pro subscribers. Enterprise
-                  customers get dedicated support with guaranteed response times. We also have comprehensive
-                  documentation, video tutorials, and a community forum where users share tips and best practices.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        </div>
-      </section>
-      {/* Footer */}
-      <footer className="w-full bg-[#18181b] bg-opacity-95 border-t border-white/10 shadow-2xl z-50 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between">
-          <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <img src={theme === 'dark' ? 'https://i.postimg.cc/DwVdb9NB/image.png' : '/icon.png'} alt="IdeaVault Icon" className="h-8 w-auto" />
-            <span className="text-lg font-bold text-foreground">IdeaVault</span>
-          </div>
-          <div className="flex space-x-6 text-muted-foreground text-sm">
-            <a href="/" className="hover:text-primary transition-colors">Home</a>
-            <a href="/signup" className="hover:text-primary transition-colors">Sign Up</a>
-            <a href="/login" className="hover:text-primary transition-colors">Login</a>
-          </div>
-          <div className="text-xs text-muted-foreground mt-4 md:mt-0">&copy; {new Date().getFullYear()} IdeaVault. All rights reserved.</div>
         </div>
       </footer>
-      {/* Keyboard Shortcuts Dialog */}
-      <KeyboardShortcuts
-        isOpen={isShortcutsOpen}
-        onOpenChange={setIsShortcutsOpen}
-      />
     </div>
+    </>
   );
 }

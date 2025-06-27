@@ -262,6 +262,77 @@ export function QuillCollaborativeEditor({
 
 
 
+    // Enhanced dropdown positioning for better accessibility
+    const handleDropdownPositioning = () => {
+      const pickers = editorRef.current?.querySelectorAll('.ql-picker.ql-expanded');
+      pickers?.forEach((picker) => {
+        const options = picker.querySelector('.ql-picker-options') as HTMLElement;
+        const label = picker.querySelector('.ql-picker-label') as HTMLElement;
+        if (options && label) {
+          const rect = label.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          const dropdownHeight = 300; // Estimated max dropdown height
+          
+          // Position dropdown
+          options.style.position = 'fixed';
+          options.style.zIndex = '9999999';
+          options.style.minWidth = '160px';
+          options.style.maxWidth = '200px';
+          options.style.maxHeight = '250px';
+          options.style.overflowY = 'auto';
+          options.style.pointerEvents = 'auto';
+          
+          // Check if dropdown would go below viewport
+          if (rect.bottom + dropdownHeight > viewportHeight) {
+            // Position above the button
+            options.style.top = `${rect.top - dropdownHeight}px`;
+            options.style.bottom = 'auto';
+          } else {
+            // Position below the button
+            options.style.top = `${rect.bottom + 4}px`;
+            options.style.bottom = 'auto';
+          }
+          
+          options.style.left = `${rect.left}px`;
+          options.style.right = 'auto';
+        }
+      });
+    };
+
+    // Enhanced dropdown event handling
+    const setupDropdownEvents = () => {
+      if (!quill) return;
+      
+      const toolbar = quill.getModule('toolbar');
+      if (toolbar && (toolbar as any).container) {
+        const toolbarElement = (toolbar as any).container as HTMLElement;
+        
+        // Handle dropdown opening
+        toolbarElement.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('.ql-picker-label')) {
+            setTimeout(handleDropdownPositioning, 50);
+          }
+        });
+        
+        // Handle dropdown state changes
+        const observer = new MutationObserver(() => {
+          setTimeout(handleDropdownPositioning, 10);
+        });
+        
+        observer.observe(toolbarElement, {
+          attributes: true,
+          subtree: true,
+          attributeFilter: ['class']
+        });
+        
+        // Store observer for cleanup
+        (quill as any)._dropdownObserver = observer;
+      }
+    };
+
+    setupDropdownEvents();
+
     // Cleanup function
     return () => {
       if (binding) binding.destroy();
@@ -278,7 +349,9 @@ export function QuillCollaborativeEditor({
           ref={editorRef}
           className="h-full quill-container notebook-background"
           style={{
-            fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif'
+            fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif',
+            border: 'none',
+            outline: 'none'
           }}
         />
       </div>
@@ -340,7 +413,7 @@ export function QuillCollaborativeEditor({
           align-items: center;
           gap: 4px;
           padding: 0 8px;
-          border-right: 1px solid hsl(var(--border));
+          border-right: none;
         }
 
         .quill-container .ql-toolbar .ql-formats:last-child {
@@ -362,8 +435,8 @@ export function QuillCollaborativeEditor({
           border-radius: 6px;
           margin: 0 1px;
           padding: 8px 10px;
-          background: white;
-          color: #333;
+          background: hsl(var(--background));
+          color: hsl(var(--foreground));
           transition: all 0.2s ease;
           position: relative;
           overflow: hidden;
@@ -374,24 +447,22 @@ export function QuillCollaborativeEditor({
           align-items: center;
           justify-content: center;
           font-size: 14px;
-          border: 1px solid #e5e7eb;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .quill-container .ql-toolbar button:hover {
-          background: #f3f4f6;
-          color: #333;
+          background: hsl(var(--muted));
+          color: hsl(var(--foreground));
           transform: none;
-          box-shadow: none;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           scale: 1;
-          border-color: #d1d5db;
         }
 
         .quill-container .ql-toolbar button.ql-active {
           background: hsl(var(--primary));
-          color: white;
-          box-shadow: none;
+          color: hsl(var(--primary-foreground));
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
           transform: none;
-          border-color: hsl(var(--primary));
         }
 
         .quill-container .ql-toolbar button.ql-active .ql-stroke {
@@ -527,19 +598,19 @@ export function QuillCollaborativeEditor({
           border-radius: 8px;
         }
 
-        /* Magic Write Style Dropdown Menu */
+        /* Magic Write Style Dropdown Menu - Fixed Z-Index Issues */
         .quill-container .ql-toolbar .ql-picker {
           border-radius: 6px;
           position: relative;
-          z-index: 100;
+          z-index: 9999;
         }
 
         .quill-container .ql-toolbar .ql-picker-label {
-          border: 1px solid #e5e7eb;
+          border: none;
           border-radius: 6px;
           padding: 8px 12px;
-          background: white;
-          color: #333;
+          background: hsl(var(--background));
+          color: hsl(var(--foreground));
           transition: all 0.2s ease;
           font-weight: 500;
           min-width: 60px;
@@ -549,37 +620,46 @@ export function QuillCollaborativeEditor({
           justify-content: space-between;
           cursor: pointer;
           font-size: 14px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .quill-container .ql-toolbar .ql-picker-label:hover {
-          background: #f3f4f6;
-          color: #333;
-          border-color: #d1d5db;
+          background: hsl(var(--muted));
+          color: hsl(var(--foreground));
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .quill-container .ql-toolbar .ql-picker.ql-expanded .ql-picker-label {
-          background: #f3f4f6;
-          color: #333;
-          border-color: #d1d5db;
+          background: hsl(var(--muted));
+          color: hsl(var(--foreground));
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .quill-container .ql-toolbar .ql-picker-options {
           background: hsl(var(--card));
           border: 1px solid hsl(var(--border));
           border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          z-index: 1000;
-          margin-top: 2px;
-          overflow: hidden;
-          max-height: 200px;
-          overflow-y: auto;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          z-index: 999999;
+          margin-top: 4px;
+          overflow: visible;
+          max-height: none;
+          overflow-y: visible;
+          position: fixed;
+          min-width: 160px;
+          max-width: 200px;
         }
 
         .quill-container .ql-toolbar .ql-picker-item {
-          padding: 8px 12px;
+          padding: 10px 16px;
           cursor: pointer;
           transition: all 0.2s ease;
           font-size: 14px;
+          white-space: nowrap;
+          pointer-events: auto;
+          user-select: none;
+          position: relative;
+          z-index: 9999999;
         }
 
         .quill-container .ql-toolbar .ql-picker-item:hover {
@@ -590,6 +670,14 @@ export function QuillCollaborativeEditor({
         .quill-container .ql-toolbar .ql-picker-item.ql-selected {
           background: hsl(var(--primary));
           color: hsl(var(--primary-foreground));
+        }
+
+        /* Ensure dropdown items are always clickable */
+        .quill-container .ql-toolbar .ql-picker.ql-expanded .ql-picker-options,
+        .quill-container .ql-toolbar .ql-picker.ql-expanded .ql-picker-item {
+          pointer-events: auto !important;
+          position: relative;
+          z-index: 9999999 !important;
         }
 
         /* Specific styling for font and header dropdowns */
@@ -665,22 +753,21 @@ export function QuillCollaborativeEditor({
           background: hsl(var(--muted-foreground)/0.5);
         }
 
-        /* Floating Effect for Editor */
+        /* Floating Effect for Editor - No borders */
         .quill-container {
           box-shadow:
             0 1px 3px rgba(0,0,0,0.1),
-            0 1px 2px rgba(0,0,0,0.06),
-            inset 0 0 0 1px hsl(var(--border)/0.5);
+            0 1px 2px rgba(0,0,0,0.06);
           border-radius: 12px;
           overflow: hidden;
           transition: box-shadow 0.3s ease;
+          border: none !important;
         }
 
         .quill-container:hover {
           box-shadow:
             0 4px 6px rgba(0,0,0,0.1),
-            0 2px 4px rgba(0,0,0,0.06),
-            inset 0 0 0 1px hsl(var(--border));
+            0 2px 4px rgba(0,0,0,0.06);
         }
 
         /* Responsive Design */
@@ -715,23 +802,72 @@ export function QuillCollaborativeEditor({
         }
 
         .quill-container .ql-container {
-          border: none;
+          border: none !important;
           font-family: inherit;
         }
 
-        /* Fix dropdown z-index and positioning issues */
+        /* Remove all borders from Quill elements */
+        .quill-container .ql-toolbar,
+        .quill-container .ql-container,
+        .quill-container .ql-editor {
+          border: none !important;
+        }
+
+        /* Override any default Quill borders - Complete removal */
+        .ql-snow .ql-toolbar {
+          border: none !important;
+          border-bottom: none !important;
+          border-top: none !important;
+          border-left: none !important;
+          border-right: none !important;
+        }
+
+        .ql-snow .ql-container {
+          border: none !important;
+          border-top: none !important;
+          border-bottom: none !important;
+          border-left: none !important;
+          border-right: none !important;
+        }
+
+        /* Force remove all borders from any Quill elements */
+        .ql-snow,
+        .ql-snow *,
+        .quill-container,
+        .quill-container * {
+          border: none !important;
+          outline: none !important;
+        }
+
+        /* Specifically target the editor div */
+        .quill-container .ql-editor {
+          border: none !important;
+          outline: none !important;
+        }
+
+        /* Fix dropdown z-index and positioning issues - Ensure dropdowns are always on top */
         .quill-container .ql-toolbar .ql-picker {
           position: relative;
-          z-index: 100;
+          z-index: 99999;
         }
 
         .quill-container .ql-toolbar .ql-picker-options {
           position: absolute;
           top: 100%;
           left: 0;
-          right: 0;
-          z-index: 1001;
-          min-width: 120px;
+          z-index: 999999;
+          min-width: 140px;
+        }
+
+        /* Ensure dropdown is above all other content */
+        .quill-container .ql-toolbar .ql-picker.ql-expanded {
+          z-index: 999999;
+        }
+
+        /* Force dropdown to appear above resizable panels and other components */
+        .quill-container .ql-toolbar .ql-picker.ql-expanded .ql-picker-options {
+          position: fixed;
+          z-index: 9999999;
         }
 
         /* Ensure dropdowns are clickable */
@@ -761,16 +897,9 @@ export function QuillCollaborativeEditor({
           text-decoration: underline;
         }
 
-        /* Toolbar separator styling */
+        /* Remove toolbar separator styling - no visual lines */
         .quill-container .ql-toolbar .ql-formats::after {
-          content: '';
-          position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          height: 20px;
-          width: 1px;
-          background: hsl(var(--border));
+          display: none;
         }
 
         .quill-container .ql-toolbar .ql-formats:last-child::after {
@@ -779,7 +908,7 @@ export function QuillCollaborativeEditor({
 
         /* Enhanced toolbar layout */
         .quill-container .ql-toolbar {
-          border-bottom: 1px solid hsl(var(--border));
+          border-bottom: none;
         }
       `}</style>
     </div>

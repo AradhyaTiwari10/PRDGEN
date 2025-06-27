@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from './use-notifications';
@@ -38,6 +38,8 @@ export function useCollaboration() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { createNotification } = useNotifications();
+  const subscriptionsRef = useRef<boolean>(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   // Fetch pending collaboration requests (received)
   const fetchPendingRequests = async () => {
@@ -237,17 +239,70 @@ export function useCollaboration() {
         throw new Error('Collaboration feature is not yet set up. Please apply the database migration first.');
       }
 
-      // Step 1: Check if user exists in auth.users
-      const { data: recipientId, error: userError } = await supabase
-        .rpc('get_user_id_by_email', { user_email: recipientEmail });
+      // Step 1: Check if user exists using the database function with fallback
+      console.log('Looking up user:', recipientEmail);
+      
+      let recipientId = null;
+      let userError = null;
+
+      try {
+        // Try the RPC function first
+        const { data, error } = await supabase
+          .rpc('get_user_id_by_email', { user_email: recipientEmail });
+        
+        recipientId = data;
+        userError = error;
+        
+        console.log('RPC function result:', { recipientId, userError });
+      } catch (rpcError) {
+        console.warn('RPC function failed, trying direct approach:', rpcError);
+        
+        // Fallback: Query using service role key for auth.users
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Not authenticated');
+
+          // Use a simple approach - check if we can find the user by email in our users table
+          // This is a workaround for the function cache issue
+          const { data: existingUser, error: queryError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', recipientEmail)
+            .maybeSingle();
+
+          if (queryError && queryError.code !== 'PGRST116') {
+            throw queryError;
+          }
+
+          if (existingUser) {
+            recipientId = existingUser.id;
+            userError = null;
+            console.log('Found user via direct query:', recipientId);
+          } else {
+            // If not found in users table, the user doesn't exist
+            userError = { message: 'User not found' };
+          }
+        } catch (fallbackError) {
+          console.error('All lookup methods failed:', fallbackError);
+          userError = fallbackError;
+        }
+      }
+
+      console.log('Final user lookup result:', { recipientId, userError });
 
       if (userError) {
         console.error('User lookup error:', userError);
-        throw new Error('Failed to look up user. Please ensure the email address is correct and the user has an account.');
+        
+        // Check if it's a function not found error
+        if (userError.message?.includes('function') || userError.code === '42883') {
+          throw new Error('Database function error. Please contact support if this issue persists.');
+        }
+        
+        throw new Error(`Failed to look up user: ${userError.message || 'Unknown error'}. Please ensure the email address is correct and the user has an account.`);
       }
 
       if (!recipientId) {
-        throw new Error(`User with email "${recipientEmail}" not found. Please ensure they have an account on this platform.`);
+        throw new Error(`User with email "${recipientEmail}" not found. Please ensure they have an account on this platform. If this is a new user, they need to sign up first.`);
       }
 
       // Double-check if user is trying to collaborate with themselves
@@ -600,6 +655,9 @@ export function useCollaboration() {
 
   // Initialize data and set up real-time subscriptions
   useEffect(() => {
+    // Prevent multiple subscriptions
+    if (subscriptionsRef.current) return;
+    
     const initializeData = async () => {
       setLoading(true);
       try {
@@ -620,9 +678,18 @@ export function useCollaboration() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Mark subscriptions as active
+      subscriptionsRef.current = true;
+
+      // Create unique channel names to prevent multiple subscription errors
+      const requestsChannelName = `collaboration_requests_${user.id}_${Date.now()}`;
+      const sharedIdeasChannelName = `shared_ideas_${user.id}_${Date.now()}`;
+
+      console.log('Setting up collaboration subscriptions...', { requestsChannelName, sharedIdeasChannelName });
+
       // Subscribe to collaboration requests where user is recipient
       const requestsSubscription = supabase
-        .channel('collaboration_requests')
+        .channel(requestsChannelName)
         .on(
           'postgres_changes',
           {
@@ -632,6 +699,7 @@ export function useCollaboration() {
             filter: `recipient_id=eq.${user.id}`,
           },
           () => {
+            console.log('Collaboration request change detected');
             fetchPendingRequests();
           }
         )
@@ -639,7 +707,7 @@ export function useCollaboration() {
 
       // Subscribe to shared ideas where user is collaborator
       const sharedIdeasSubscription = supabase
-        .channel('shared_ideas')
+        .channel(sharedIdeasChannelName)
         .on(
           'postgres_changes',
           {
@@ -649,23 +717,35 @@ export function useCollaboration() {
             filter: `collaborator_id=eq.${user.id}`,
           },
           () => {
+            console.log('Shared idea change detected');
             fetchSharedIdeas();
           }
         )
         .subscribe();
 
       // Cleanup subscriptions
-      return () => {
-        requestsSubscription.unsubscribe();
-        sharedIdeasSubscription.unsubscribe();
+      const cleanup = () => {
+        console.log('Cleaning up collaboration subscriptions...');
+        subscriptionsRef.current = false;
+        if (requestsSubscription) {
+          supabase.removeChannel(requestsSubscription);
+        }
+        if (sharedIdeasSubscription) {
+          supabase.removeChannel(sharedIdeasSubscription);
+        }
       };
+
+      cleanupRef.current = cleanup;
+      return cleanup;
     };
 
     initializeData();
-    const cleanupPromise = setupSubscriptions();
+    setupSubscriptions();
 
     return () => {
-      cleanupPromise.then(cleanup => cleanup?.());
+      if (cleanupRef.current) {
+        cleanupRef.current();
+      }
     };
   }, []);
 

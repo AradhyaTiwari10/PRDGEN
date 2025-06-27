@@ -116,20 +116,20 @@ export default function IdeasPage() {
         <Navbar />
         <main className="container mx-auto py-8">
           <div className="flex justify-between items-center mb-8">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-48 bg-[#5A827E]/20 border border-[#5A827E]/30" />
+            <Skeleton className="h-10 w-32 bg-[#5A827E]/20 border border-[#5A827E]/30" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card className="bg-card" key={i}>
+              <Card className="bg-black/40 backdrop-blur-md border border-white/10" key={i}>
                 <CardHeader>
-                  <Skeleton className="h-6 w-40 mb-2" />
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-40 mb-2 bg-[#5A827E]/30 border border-[#B9D4AA]/30" />
+                  <Skeleton className="h-4 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-4 w-full mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-3/4 mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-1/2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
                 </CardContent>
               </Card>
             ))}

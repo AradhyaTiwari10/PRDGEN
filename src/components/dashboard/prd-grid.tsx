@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Heart, Search, FileText, Calendar, Trash2 } from "lucide-react";
+import { Heart, Search, FileText, Calendar, Trash2, Lightbulb } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -83,17 +83,17 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#B9D4AA] h-4 w-4" />
           <Input
             placeholder="Search PRDs..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-[#5A827E]/30 border-[#84AE92] text-[#FAFFCA] placeholder-[#B9D4AA]/80 focus:border-[#B9D4AA]"
           />
         </div>
 
         <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full md:w-48">
+          <SelectTrigger className="w-full md:w-48 bg-[#5A827E]/30 border-[#84AE92] text-[#FAFFCA] focus:border-[#B9D4AA]">
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
@@ -107,7 +107,7 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
         </Select>
 
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full md:w-48">
+          <SelectTrigger className="w-full md:w-48 bg-[#5A827E]/30 border-[#84AE92] text-[#FAFFCA] focus:border-[#B9D4AA]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -141,16 +141,16 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPRDs.map((prd) => (
-            <Card key={prd.id} className="group relative hover:shadow-xl transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border hover:border-primary/20">
+            <Card key={prd.id} className="group relative hover:shadow-xl transition-all duration-300 ease-out hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border border-[#5A827E] hover:border-[#84AE92] bg-[#5A827E]/20 backdrop-blur-md">
               {/* Hover Background Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                              <div className="absolute inset-0 bg-gradient-to-br from-[#B9D4AA]/10 via-transparent to-[#84AE92]/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-              {/* Subtle Border Glow */}
-              <div className="absolute inset-0 rounded-lg border border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* Subtle Border Glow */}
+                <div className="absolute inset-0 rounded-lg border border-[#B9D4AA]/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
               <CardHeader className="relative z-10">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                  <CardTitle className="text-lg line-clamp-2 text-white group-hover:text-[#B9D4AA] transition-colors duration-300">
                     {prd.title}
                   </CardTitle>
                   <div className="flex items-center space-x-2">
@@ -188,13 +188,13 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
                     </AlertDialog>
                   </div>
                 </div>
-                <CardDescription className="line-clamp-3 group-hover:text-foreground transition-colors duration-300">
+                <CardDescription className="line-clamp-3 text-white/80 group-hover:text-white transition-colors duration-300">
                   {prd.original_idea}
                 </CardDescription>
               </CardHeader>
               <CardContent className="relative z-10">
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-wrap">
                     {prd.category && (
                       <Badge variant="secondary" className="text-xs group-hover:scale-105 transition-transform duration-300">
                         {capitalizeFirst(prd.category)}
@@ -206,6 +206,20 @@ export function PRDGrid({ prds, onDelete, deletePRD }: PRDGridProps) {
                     >
                       {capitalizeFirst(prd.status)}
                     </Badge>
+                    {prd.idea_id && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs group-hover:scale-105 transition-transform duration-300 bg-[#B9D4AA]/20 border-[#B9D4AA] text-[#B9D4AA] cursor-pointer hover:bg-[#B9D4AA]/30"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          navigate(`/idea/${prd.idea_id}`);
+                        }}
+                      >
+                        <Lightbulb className="h-3 w-3 mr-1" />
+                        From Idea
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center text-sm text-gray-500 group-hover:text-foreground transition-colors duration-300">

@@ -75,63 +75,63 @@ export default function PRDPage() {
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32 bg-[#5A827E]/20 border border-[#5A827E]/30" />
           </div>
           <div className="max-w-4xl mx-auto space-y-6">
-            <Card className="bg-card">
+            <Card className="bg-black/40 backdrop-blur-md border border-white/10">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-8 w-64 bg-[#5A827E]/30 border border-[#B9D4AA]/30" />
                     <div className="flex items-center space-x-2">
-                      <Skeleton className="h-6 w-20" />
-                      <Skeleton className="h-6 w-24" />
-                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-6 w-20 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                      <Skeleton className="h-6 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                      <Skeleton className="h-4 w-32 bg-[#5A827E]/15 border border-[#B9D4AA]/15" />
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-8" />
-                    <Skeleton className="h-8 w-24" />
-                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-8 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-8 w-8 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-8 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-8 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
                   </div>
                 </div>
               </CardHeader>
             </Card>
 
-            <Card className="bg-card">
+            <Card className="bg-black/40 backdrop-blur-md border border-white/10">
               <CardHeader>
-                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-6 w-32 bg-[#5A827E]/20 border border-[#5A827E]/30" />
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-full bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-3/4 bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-5/6 bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-card">
+            <Card className="bg-black/40 backdrop-blur-md border border-white/10">
               <CardHeader>
-                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-6 w-48 bg-[#5A827E]/20 border border-[#5A827E]/30" />
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-6 w-3/4 bg-[#5A827E]/25 border border-[#B9D4AA]/25" />
+                    <Skeleton className="h-4 w-full bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-4 w-5/6 bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
                   </div>
                   <div className="space-y-2">
-                    <Skeleton className="h-6 w-2/3" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-6 w-2/3 bg-[#5A827E]/25 border border-[#B9D4AA]/25" />
+                    <Skeleton className="h-4 w-full bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-4 w-4/5 bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
                   </div>
                   <div className="space-y-2">
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-6 w-1/2 bg-[#5A827E]/25 border border-[#B9D4AA]/25" />
+                    <Skeleton className="h-4 w-full bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
+                    <Skeleton className="h-4 w-3/4 bg-[#5A827E]/15 border border-[#B9D4AA]/20" />
                   </div>
                 </div>
               </CardContent>

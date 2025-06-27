@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { QuillCollaborativeEditor } from "@/components/editor/QuillCollaborativeEditor";
+import { BlockNoteCollaborativeEditorV2 } from "@/components/editor/BlockNoteCollaborativeEditorV2";
+import { BlockNoteEditorGuide } from "@/components/editor/BlockNoteEditorGuide";
 import { IdeaAssistant } from "@/components/idea/IdeaAssistant";
 import { SimilaritySearch } from "@/components/idea/SimilaritySearch";
+import { PRDGeneratorTab } from "@/components/prd/prd-generator-form";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Save, ArrowLeft, Bot, FileText, Clock, CheckCircle, Sparkles } from "lucide-react";
+import { Save, ArrowLeft, Bot, FileText, Clock, CheckCircle, Sparkles, Users, Settings } from "lucide-react";
 import { useIdeas } from "@/hooks/use-ideas";
-import { useKeyboardShortcuts, commonShortcuts } from "@/hooks/use-keyboard-shortcuts";
+
 import { Idea } from "@/types";
 import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
@@ -95,109 +97,226 @@ export default function DetailedIdeaPage() {
     if (id) await performSave(content, false);
   };
 
-  useKeyboardShortcuts([
-    commonShortcuts.save(() => handleManualSave()),
-    commonShortcuts.escape(() => {
-      handleManualSave();
-      navigate(-1);
-    }),
-  ]);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-blue-500 text-white';
+      case 'in_progress': return 'bg-yellow-500 text-white';
+      case 'ready_for_prd': return 'bg-green-500 text-white';
+      case 'completed': return 'bg-gray-500 text-white';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const formatStatusLabel = (status: string) => {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
 
   if (loading) {
-    return <div className="container mx-auto py-8 flex items-center justify-center h-64">Loading...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your idea...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!idea) {
-    return <div className="container mx-auto py-8 flex items-center justify-center h-64">Idea not found.</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <FileText className="h-16 w-16 text-muted-foreground mx-auto" />
+          <div>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Idea Not Found</h2>
+            <p className="text-muted-foreground mb-4">The idea you're looking for doesn't exist or you don't have access to it.</p>
+            <Button onClick={() => navigate('/dashboard')} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <div className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => { handleManualSave(); navigate(-1); }} className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back
-              </Button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-foreground">{idea.title}</h1>
-                <Badge variant="secondary">{idea.category}</Badge>
-                <Badge variant={idea.status === 'new' ? 'default' : idea.status === 'in_progress' ? 'secondary' : idea.status === 'ready_for_prd' ? 'secondary' : 'outline'}>
-                  {idea.status.replace('_', ' ')}
-                </Badge>
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+      {/* Merged Fullscreen Header */}
+      <div className="flex-shrink-0 bg-background border-b border-border">
+        <div className="flex justify-between items-center px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => { handleManualSave(); navigate(-1); }} 
+              className="flex items-center gap-2 hover:bg-muted/80 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> 
+              Back
+            </Button>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-xl font-bold text-foreground tracking-tight">{idea.title}</h1>
+                {idea.is_shared && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-xs">
+                      <Users className="h-3 w-3 mr-1" />
+                      Shared
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {isAutoSaveEnabled && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {isSaving ? <><Clock className="h-4 w-4 animate-spin" /><span>Saving...</span></> : lastSaved && !hasUnsavedChanges ? <CheckCircle className="h-4 w-4 text-green-500" /> : null}
-                </div>
-              )}
-              <CollaborationRequestModal idea={idea} />
-              <CollaboratorsManagement idea={idea} />
-              <Button onClick={handleManualSave} className="flex items-center justify-center gap-2" disabled={isSaving} variant={isAutoSaveEnabled ? "outline" : "default"}>
-                <Save className="h-4 w-4" /> {isAutoSaveEnabled ? "Save Now" : "Save"}
-              </Button>
-            </div>
+          </div>
+          
+          {/* Compact Action Bar */}
+          <div className="flex items-center gap-2">
+            {/* Auto-save Status */}
+            {isAutoSaveEnabled && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                {isSaving ? (
+                  <>
+                    <Clock className="h-3 w-3 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : lastSaved && !hasUnsavedChanges ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <span className="text-green-600">Saved</span>
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>
+                    <Clock className="h-3 w-3 text-amber-500" />
+                    <span className="text-amber-600">Unsaved</span>
+                  </>
+                ) : null}
+              </div>
+            )}
+            
+            {/* Collaboration Controls */}
+            <CollaborationRequestModal idea={idea} />
+            <CollaboratorsManagement idea={idea} />
+            
+            {/* Save Button - Always Visible */}
+            <Button 
+              onClick={handleManualSave} 
+              size="sm"
+              className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap" 
+              disabled={isSaving}
+            >
+              <Save className="h-4 w-4" /> 
+              Save Now
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 px-4 py-4">
-        <ResizablePanelGroup direction="horizontal" className="h-full rounded-lg border border-border bg-background">
+      {/* Fullscreen Content Area */}
+      <div className="flex-1 min-h-0">
+        <ResizablePanelGroup direction="horizontal" className="h-full bg-background">
+          {/* Left Panel - Editor */}
           <ResizablePanel defaultSize={40} minSize={30}>
-            <div className="h-full flex flex-col bg-card rounded-lg shadow-sm">
-              <div className="flex items-center justify-between p-3 border-b border-border bg-muted/50 flex-shrink-0 rounded-t-lg">
+            <div className="h-full flex flex-col bg-background">
+              {/* Compact Editor Header */}
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/20 flex-shrink-0">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-foreground">Idea Content</span>
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-foreground text-sm">Idea Content</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch id="auto-save" checked={isAutoSaveEnabled} onCheckedChange={setIsAutoSaveEnabled} />
-                  <label htmlFor="auto-save" className="text-sm font-medium cursor-pointer text-muted-foreground">Auto-Save</label>
+                  <BlockNoteEditorGuide />
+                  <Switch 
+                    id="auto-save" 
+                    checked={isAutoSaveEnabled} 
+                    onCheckedChange={setIsAutoSaveEnabled}
+                    className="data-[state=checked]:bg-green-500 scale-75"
+                  />
+                  <label htmlFor="auto-save" className="text-xs font-medium cursor-pointer text-muted-foreground">
+                    Auto-Save
+                  </label>
                   {isAutoSaveEnabled && (
-                    <div className="text-xs text-muted-foreground ml-1">
-                      {isSaving ? "Saving..." : lastSaved && !hasUnsavedChanges ? <CheckCircle className="h-3 w-3 text-green-500" /> : "Enabled"}
+                    <div className="text-xs text-muted-foreground">
+                      {isSaving ? (
+                        <span className="text-amber-600">Saving...</span>
+                      ) : lastSaved && !hasUnsavedChanges ? (
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <span className="text-green-600">On</span>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
+              
+              {/* Editor - Full Height */}
               <div className="flex-1 min-h-0 overflow-hidden">
-                <QuillCollaborativeEditor
+                <BlockNoteCollaborativeEditorV2
+                  key={`editor-${idea.id}`}
                   content={content}
                   onChange={setContent}
                   readOnly={idea?.is_shared && idea?.permission_level === 'view'}
-                  ideaId={id!}
+                  ideaId={idea.id}
+                  ideaTitle={idea.title}
+                  ideaDescription={idea.description}
+                  ideaMarketSize={idea.market_size}
+                  ideaCompetition={idea.competition}
+                  ideaNotes={idea.notes}
                 />
               </div>
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          
+          <ResizableHandle withHandle className="hover:bg-primary/20 transition-colors w-1" />
+          
+          {/* Right Panel - Tools */}
           <ResizablePanel defaultSize={30} minSize={25}>
-            <div className="h-full bg-card rounded-lg shadow-sm overflow-hidden">
+            <div className="h-full bg-background">
               <Tabs defaultValue="assistant" className="h-full flex flex-col">
-                <div className="flex-shrink-0 p-3 pb-0">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="assistant" className="flex items-center gap-2 text-sm">
-                      <Bot className="h-4 w-4" />
-                      AI Assistant
+                {/* Compact Tab Navigation */}
+                <div className="flex-shrink-0 px-3 py-2 border-b border-border">
+                  <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-0.5 rounded h-8">
+                    <TabsTrigger 
+                      value="assistant" 
+                      className="flex items-center gap-1 text-xs font-medium data-[state=active]:bg-background data-[state=active]:text-foreground transition-all py-1"
+                    >
+                      <Bot className="h-3 w-3" />
+                      Nexi
                     </TabsTrigger>
-                    <TabsTrigger value="similarity" className="flex items-center gap-2 text-sm">
-                      <Sparkles className="h-4 w-4" />
-                      Similar Ideas
+                    <TabsTrigger 
+                      value="similarity" 
+                      className="flex items-center gap-1 text-xs font-medium data-[state=active]:bg-background data-[state=active]:text-foreground transition-all py-1"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                      Similar
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="prd" 
+                      className="flex items-center gap-1 text-xs font-medium data-[state=active]:bg-background data-[state=active]:text-foreground transition-all py-1"
+                    >
+                      <FileText className="h-3 w-3" />
+                      PRD
                     </TabsTrigger>
                   </TabsList>
                 </div>
+                
+                {/* Tab Content - Full Height */}
                 <div className="flex-1 min-h-0 overflow-hidden">
-                  <TabsContent value="assistant" className="h-full m-0 p-0 data-[state=active]:block data-[state=inactive]:hidden">
+                  <TabsContent value="assistant" className="h-full m-0 p-0">
                     <div className="h-full overflow-hidden">
                       <IdeaAssistant idea={idea} />
                     </div>
                   </TabsContent>
-                  <TabsContent value="similarity" className="h-full m-0 p-0 data-[state=active]:block data-[state=inactive]:hidden">
+                  
+                  <TabsContent value="similarity" className="h-full m-0 p-0">
                     <div className="h-full overflow-auto p-3">
                       <SimilaritySearch currentIdea={idea} />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="prd" className="h-full m-0 p-0">
+                    <div className="h-full overflow-auto">
+                      <PRDGeneratorTab idea={idea} />
                     </div>
                   </TabsContent>
                 </div>
