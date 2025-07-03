@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { PRD } from '@/types'
 import { toast } from '@/components/ui/use-toast'
+import { useAuth } from './use-auth'
 
 export function usePRDs() {
   const [prds, setPrds] = useState<PRD[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const { user, isAuthenticated } = useAuth()
 
   const fetchPRDs = async () => {
     try {
@@ -110,8 +112,15 @@ export function usePRDs() {
   }
 
   useEffect(() => {
-    fetchPRDs()
-  }, [])
+    // Only fetch data if user is authenticated
+    if (isAuthenticated && user) {
+      fetchPRDs()
+    } else {
+      // Clear data when user is not authenticated
+      setPrds([])
+      setLoading(false)
+    }
+  }, [isAuthenticated, user])
 
   return { prds, loading, error, refreshPRDs: fetchPRDs, deletePRD }
 } 

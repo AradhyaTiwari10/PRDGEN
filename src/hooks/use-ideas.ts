@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Idea, IdeaCollection } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from './use-auth';
 
 export function useIdeas() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -9,6 +10,7 @@ export function useIdeas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
   const fetchIdeas = async () => {
     try {
@@ -30,7 +32,7 @@ export function useIdeas() {
         .select(`
           idea_id,
           permission_level,
-          ideas!inner(id, title, description, content, category, status, priority, market_size, competition, notes, is_favorite, user_id, created_at, updated_at)
+          ideas!inner(id, title, description, content, category, status, priority, market_size, competition, notes, is_favorite, user_id, created_at, updated_at, attachments, target_audience)
         `)
         .eq('collaborator_id', user.id);
 
@@ -38,10 +40,11 @@ export function useIdeas() {
       if (!sharedError && sharedIdeasData) {
         sharedIdeas = sharedIdeasData.map(shared => ({
           ...shared.ideas,
-          // Add a flag to indicate this is a shared idea
           is_shared: true,
-          permission_level: shared.permission_level
-        })) as Idea[];
+          permission_level: shared.permission_level,
+          attachments: shared.ideas.attachments || [],
+          target_audience: shared.ideas.target_audience || ''
+        })) as unknown as Idea[];
       }
 
       // Combine own ideas and shared ideas
@@ -349,9 +352,17 @@ export function useIdeas() {
   };
 
   useEffect(() => {
-    fetchIdeas();
-    fetchCollections();
-  }, []);
+    // Only fetch data if user is authenticated
+    if (isAuthenticated && user) {
+      fetchIdeas();
+      fetchCollections();
+    } else {
+      // Clear data when user is not authenticated
+      setIdeas([]);
+      setCollections([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
   return {
     ideas,

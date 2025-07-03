@@ -15,6 +15,7 @@ import {
 
 import { usePRDs } from "@/hooks/use-prds";
 import { useIdeas } from "@/hooks/use-ideas";
+import { useAuth } from "@/hooks/use-auth";
 import { Navbar } from "@/components/layout/navbar";
 import { SimpleAnimatedTabs } from "@/components/ui/simple-animated-tabs";
 import { Input } from "@/components/ui/input";
@@ -87,12 +88,15 @@ export default function DashboardPage() {
     updateIdea,
     deleteIdea,
   } = useIdeas();
+  const { user, isAuthenticated, refreshSession } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ideas");
 
   // Check URL parameters for tab selection
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    console.log('🔍 Dashboard URL params:', Object.fromEntries(urlParams.entries()));
+    
     const tabParam = urlParams.get('tab');
     if (tabParam && ['ideas', 'shared', 'prds'].includes(tabParam)) {
       setActiveTab(tabParam);
@@ -156,19 +160,106 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      console.log('🔍 Dashboard: Checking authentication...');
+      console.log('👤 Current user from useAuth:', user?.email);
+      console.log('✅ Is authenticated:', isAuthenticated);
+      
+      // Check for OAuth callback parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasOAuthParams = urlParams.has('access_token') || urlParams.has('refresh_token') || urlParams.has('error');
+      
+      if (hasOAuthParams) {
+        console.log('🔄 OAuth callback detected, handling...');
+        console.log('📋 OAuth params:', Object.fromEntries(urlParams.entries()));
+        
+        try {
+          // Handle OAuth callback by setting the session
+          const { data, error } = await supabase.auth.setSession({
+            access_token: urlParams.get('access_token') || '',
+            refresh_token: urlParams.get('refresh_token') || ''
+          });
+          
+          console.log('📡 OAuth setSession result:', { data, error });
+          
+          if (error) {
+            console.error('❌ OAuth setSession error:', error);
+          } else if (data.session) {
+            console.log('✅ OAuth session established for:', data.session.user.email);
+            // Clean up URL parameters
+            const newUrl = new URL(window.location.href);
+            newUrl.search = '';
+            window.history.replaceState({}, '', newUrl.toString());
+          }
+        } catch (error) {
+          console.error('💥 OAuth callback handling failed:', error);
+        }
+      }
+      
+      // Also check URL hash for OAuth tokens (alternative callback method)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const hasHashTokens = hashParams.has('access_token') || hashParams.has('refresh_token');
+      
+      if (hasHashTokens) {
+        console.log('🔄 OAuth hash tokens detected, handling...');
+        console.log('📋 Hash params:', Object.fromEntries(hashParams.entries()));
+        
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: hashParams.get('access_token') || '',
+            refresh_token: hashParams.get('refresh_token') || ''
+          });
+          
+          console.log('📡 OAuth hash setSession result:', { data, error });
+          
+          if (data.session) {
+            console.log('✅ OAuth hash session established for:', data.session.user.email);
+            // Clean up URL hash
+            window.location.hash = '';
+          }
+        } catch (error) {
+          console.error('💥 OAuth hash callback handling failed:', error);
+        }
+      }
+      
+      // If we don't have a user but we're on the dashboard (possibly after OAuth redirect)
+      if (!user && !isAuthenticated) {
+        console.log('🔄 No user found, attempting to refresh session...');
+        await refreshSession();
+        
+        // Check again after refresh
+        const {
+          data: { user: refreshedUser },
+          error,
+        } = await supabase.auth.getUser();
 
-      if (error || !user) {
-        navigate("/login");
-        return;
+        if (error || !refreshedUser) {
+          console.log('❌ Still no user after refresh, redirecting to login');
+          navigate("/login");
+          return;
+        } else {
+          console.log('✅ User found after refresh:', refreshedUser.email);
+        }
+      } else if (user) {
+        console.log('✅ User already authenticated:', user.email);
+      }
+      
+      // Debug: Check localStorage for Supabase session data
+      const supabaseKeys = Object.keys(localStorage).filter(key => key.includes('supabase'));
+      console.log('🔍 Supabase localStorage keys:', supabaseKeys);
+      if (supabaseKeys.length > 0) {
+        supabaseKeys.forEach(key => {
+          try {
+            const value = localStorage.getItem(key);
+            console.log(`📦 ${key}:`, value ? JSON.parse(value) : null);
+          } catch (e) {
+            console.log(`📦 ${key}:`, localStorage.getItem(key));
+          }
+        });
       }
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [navigate, user, isAuthenticated, refreshSession]);
 
   const handleCreateIdea = async () => {
     if (!promptInput.trim()) {

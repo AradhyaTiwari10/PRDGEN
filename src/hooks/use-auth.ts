@@ -28,12 +28,29 @@ export function useAuth() {
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session?.user?.id);
+      console.log('🔐 Auth state change:', event);
+      console.log('👤 User:', session?.user?.email);
+      console.log('🆔 User ID:', session?.user?.id);
+      console.log('📋 Full session:', session);
       
       if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        console.log('✅ User signed in or token refreshed');
         // Verify user exists in database when token is refreshed
         if (session?.user) {
           verifyUserExists(session.user.id);
+        }
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('🚪 User signed out');
+      }
+      
+      if (event === 'INITIAL_SESSION') {
+        console.log('🔄 Initial session check');
+        if (session?.user) {
+          console.log('✅ Found existing session for:', session.user.email);
+        } else {
+          console.log('❌ No existing session found');
         }
       }
       
@@ -109,12 +126,33 @@ export function useAuth() {
     console.log('======================');
   };
 
+  const refreshSession = async () => {
+    console.log('🔄 Manually refreshing session...');
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('📋 Session refresh result:', { session: !!session, user: session?.user?.email, error });
+      
+      if (error) {
+        console.error('❌ Session refresh error:', error);
+      } else if (session?.user) {
+        console.log('✅ Session refreshed successfully for:', session.user.email);
+        setUser(session.user);
+      } else {
+        console.log('❌ No session found after refresh');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('💥 Session refresh failed:', error);
+    }
+  };
+
   return {
     user,
     loading,
     signOut,
     forceSignOut,
     debugAuth,
+    refreshSession,
     isAuthenticated: !!user,
   };
 } 
