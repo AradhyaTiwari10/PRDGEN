@@ -166,79 +166,79 @@ export function NotFound() {
 
         {/* 404 Content */}
         <div className="relative z-20 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              className="text-center"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
+      <AnimatePresence mode="wait">
+        <motion.div 
+          className="text-center"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+        >
+          <div className="flex items-center justify-center gap-4 md:gap-6 mb-8 md:mb-12">
+            <motion.span 
+                  className="text-[80px] md:text-[120px] font-bold text-[#FAFFCA] select-none"
+              variants={numberVariants}
+              custom={-1}
             >
-              <div className="flex items-center justify-center gap-4 md:gap-6 mb-8 md:mb-12">
-                <motion.span 
-                  className="text-[80px] md:text-[120px] font-bold text-[#FAFFCA] select-none"
-                  variants={numberVariants}
-                  custom={-1}
-                >
-                  4
-                </motion.span>
-                <motion.div
-                  variants={ghostVariants}
-                  whileHover="hover"
-                  animate={["visible", "floating"]}
-                >
-                  <img
-                    src="https://i.postimg.cc/WzXD5tR0/image-Photoroom.png"
-                    alt="Ghost"
-                    width={120}
-                    height={120}
-                    className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-contain select-none"
-                    draggable="false"
-                  />
-                </motion.div>
-                <motion.span 
-                  className="text-[80px] md:text-[120px] font-bold text-[#FAFFCA] select-none"
-                  variants={numberVariants}
-                  custom={1}
-                >
-                  4
-                </motion.span>
-              </div>
-              
-              <motion.h1 
-                className="text-3xl md:text-5xl font-bold text-[#FAFFCA] mb-4 md:mb-6 select-none"
-                variants={itemVariants}
-              >
-                Boo! Page missing!
-              </motion.h1>
-              
-              <motion.p 
-                className="text-lg md:text-xl text-[#B9D4AA] mb-8 md:mb-12 select-none"
-                variants={itemVariants}
-              >
-                Whoops! This page must be a ghost - it&apos;s not here!
-              </motion.p>
-
-              <motion.div
-                variants={itemVariants}
-                whileHover={{
-                  scale: 1.05,
-                  transition: {
-                    duration: 0.3,
-                    ease: [0.43, 0.13, 0.23, 0.96]
-                  }
-                }}
-              >
-                <Link
-                  to="/"
-                  className="inline-block bg-[#5A827E] hover:bg-[#84AE92] text-[#FAFFCA] px-8 py-3 rounded-full text-lg font-medium transition-colors duration-300 select-none"
-                >
-                  Find shelter
-                </Link>
-              </motion.div>
+              4
+            </motion.span>
+            <motion.div
+              variants={ghostVariants}
+              whileHover="hover"
+              animate={["visible", "floating"]}
+            >
+              <img
+                src="https://i.postimg.cc/WzXD5tR0/image-Photoroom.png"
+                alt="Ghost"
+                width={120}
+                height={120}
+                className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-contain select-none"
+                draggable="false"
+              />
             </motion.div>
-          </AnimatePresence>
-        </div>
+            <motion.span 
+                  className="text-[80px] md:text-[120px] font-bold text-[#FAFFCA] select-none"
+              variants={numberVariants}
+              custom={1}
+            >
+              4
+            </motion.span>
+          </div>
+          
+          <motion.h1 
+                className="text-3xl md:text-5xl font-bold text-[#FAFFCA] mb-4 md:mb-6 select-none"
+            variants={itemVariants}
+          >
+            Boo! Page missing!
+          </motion.h1>
+          
+          <motion.p 
+                className="text-lg md:text-xl text-[#B9D4AA] mb-8 md:mb-12 select-none"
+            variants={itemVariants}
+          >
+            Whoops! This page must be a ghost - it&apos;s not here!
+          </motion.p>
+
+          <motion.div
+            variants={itemVariants}
+            whileHover={{
+              scale: 1.05,
+              transition: {
+                duration: 0.3,
+                ease: [0.43, 0.13, 0.23, 0.96]
+              }
+            }}
+          >
+            <Link
+              to="/"
+                  className="inline-block bg-[#5A827E] hover:bg-[#84AE92] text-[#FAFFCA] px-8 py-3 rounded-full text-lg font-medium transition-colors duration-300 select-none"
+            >
+              Find shelter
+            </Link>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
 
         {/* Footer - Same as landing page */}
         <footer className="relative z-20 mt-16 py-8 bg-black border-t border-[#5A827E]/30 transition-all duration-300">

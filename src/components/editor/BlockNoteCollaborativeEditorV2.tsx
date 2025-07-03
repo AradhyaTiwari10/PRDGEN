@@ -36,120 +36,120 @@ const generateIdeaTemplate = (
       id: "title",
       type: "heading" as const,
       props: { level: 1 },
-      content: [{ type: "text" as const, text: title || "Your Idea Title", styles: {} }]
+      content: title || "Your Idea Title"
     },
     {
       id: "overview",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "📝 Idea Overview", styles: {} }]
+      content: "📝 Idea Overview"
     },
     {
       id: "description",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: description || "Describe your idea in detail here...", styles: {} }]
+      content: description || "Describe your idea in detail here..."
     },
     {
       id: "problem",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "❗ Problem Statement", styles: {} }]
+      content: "❗ Problem Statement"
     },
     {
       id: "problem-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: "What specific problem does your idea solve? Who experiences this problem and how often?", styles: { italic: true } }]
+      content: "What specific problem does your idea solve? Who experiences this problem and how often?"
     },
     {
       id: "solution",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "💡 Proposed Solution", styles: {} }]
+      content: "💡 Proposed Solution"
     },
     {
       id: "solution-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: "How does your idea solve the problem? What makes it unique or better than existing solutions?", styles: { italic: true } }]
+      content: "How does your idea solve the problem? What makes it unique or better than existing solutions?"
     },
     {
       id: "target-audience",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "🎯 Target Audience", styles: {} }]
+      content: "🎯 Target Audience"
     },
     {
       id: "target-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: "Who are your primary users? Demographics, behaviors, needs, and pain points.", styles: { italic: true } }]
+      content: "Who are your primary users? Demographics, behaviors, needs, and pain points."
     },
     {
       id: "key-features",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "⭐ Key Features", styles: {} }]
+      content: "⭐ Key Features"
     },
     {
       id: "features-list",
       type: "bulletListItem" as const,
-      content: [{ type: "text" as const, text: "Core feature 1", styles: { italic: true } }]
+      content: "Core feature 1"
     },
     {
       id: "features-list-2",
       type: "bulletListItem" as const,
-      content: [{ type: "text" as const, text: "Core feature 2", styles: { italic: true } }]
+      content: "Core feature 2"
     },
     {
       id: "features-list-3",
       type: "bulletListItem" as const,
-      content: [{ type: "text" as const, text: "Core feature 3", styles: { italic: true } }]
+      content: "Core feature 3"
     },
     {
       id: "market",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "📊 Market Analysis", styles: {} }]
+      content: "📊 Market Analysis"
     },
     {
       id: "market-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: `Market Size: ${marketSize || "Research and define your total addressable market (TAM)"}`, styles: {} }]
+      content: `Market Size: ${marketSize || "Research and define your total addressable market (TAM)"}`
     },
     {
       id: "competition-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: `Competition: ${competition || "Identify direct and indirect competitors, their strengths and weaknesses"}`, styles: {} }]
+      content: `Competition: ${competition || "Identify direct and indirect competitors, their strengths and weaknesses"}`
     },
     {
       id: "next-steps",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "🚀 Next Steps", styles: {} }]
+      content: "🚀 Next Steps"
     },
     {
       id: "steps-list",
       type: "numberedListItem" as const,
-      content: [{ type: "text" as const, text: "Validate the problem with potential users", styles: { italic: true } }]
+      content: "Validate the problem with potential users"
     },
     {
       id: "steps-list-2",
       type: "numberedListItem" as const,
-      content: [{ type: "text" as const, text: "Create a minimum viable product (MVP)", styles: { italic: true } }]
+      content: "Create a minimum viable product (MVP)"
     },
     {
       id: "steps-list-3",
       type: "numberedListItem" as const,
-      content: [{ type: "text" as const, text: "Test with early adopters and gather feedback", styles: { italic: true } }]
+      content: "Test with early adopters and gather feedback"
     },
     {
       id: "notes",
       type: "heading" as const,
       props: { level: 2 },
-      content: [{ type: "text" as const, text: "📋 Additional Notes", styles: {} }]
+      content: "📋 Additional Notes"
     },
     {
       id: "notes-content",
       type: "paragraph" as const,
-      content: [{ type: "text" as const, text: notes || "Add any additional thoughts, resources, or considerations here...", styles: { italic: true } }]
+      content: notes || "Add any additional thoughts, resources, or considerations here..."
     }
   ];
 };

@@ -97,120 +97,120 @@ export function useIdeas() {
           id: "title",
           type: "heading",
           props: { level: 1 },
-          content: [{ type: "text", text: idea.title || "Your Idea Title", styles: {} }]
+          content: idea.title || "Your Idea Title"
         },
         {
           id: "overview",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "📝 Idea Overview", styles: {} }]
+          content: "📝 Idea Overview"
         },
         {
           id: "description",
           type: "paragraph",
-          content: [{ type: "text", text: idea.description || "Describe your idea in detail here...", styles: {} }]
+          content: idea.description || "Describe your idea in detail here..."
         },
         {
           id: "problem",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "❗ Problem Statement", styles: {} }]
+          content: "❗ Problem Statement"
         },
         {
           id: "problem-content",
           type: "paragraph",
-          content: [{ type: "text", text: "What specific problem does your idea solve? Who experiences this problem and how often?", styles: { italic: true } }]
+          content: "What specific problem does your idea solve? Who experiences this problem and how often?"
         },
         {
           id: "solution",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "💡 Proposed Solution", styles: {} }]
+          content: "💡 Proposed Solution"
         },
         {
           id: "solution-content",
           type: "paragraph",
-          content: [{ type: "text", text: "How does your idea solve the problem? What makes it unique or better than existing solutions?", styles: { italic: true } }]
+          content: "How does your idea solve the problem? What makes it unique or better than existing solutions?"
         },
         {
           id: "target-audience",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "🎯 Target Audience", styles: {} }]
+          content: "🎯 Target Audience"
         },
         {
           id: "target-content",
           type: "paragraph",
-          content: [{ type: "text", text: "Who are your primary users? Demographics, behaviors, needs, and pain points.", styles: { italic: true } }]
+          content: "Who are your primary users? Demographics, behaviors, needs, and pain points."
         },
         {
           id: "key-features",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "⭐ Key Features", styles: {} }]
+          content: "⭐ Key Features"
         },
         {
           id: "features-list",
           type: "bulletListItem",
-          content: [{ type: "text", text: "Core feature 1", styles: { italic: true } }]
+          content: "Core feature 1"
         },
         {
           id: "features-list-2",
           type: "bulletListItem",
-          content: [{ type: "text", text: "Core feature 2", styles: { italic: true } }]
+          content: "Core feature 2"
         },
         {
           id: "features-list-3",
           type: "bulletListItem",
-          content: [{ type: "text", text: "Core feature 3", styles: { italic: true } }]
+          content: "Core feature 3"
         },
         {
           id: "market",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "📊 Market Analysis", styles: {} }]
+          content: "📊 Market Analysis"
         },
         {
           id: "market-content",
           type: "paragraph",
-          content: [{ type: "text", text: `Market Size: ${idea.market_size || "Research and define your total addressable market (TAM)"}`, styles: {} }]
+          content: `Market Size: ${idea.market_size || "Research and define your total addressable market (TAM)"}`
         },
         {
           id: "competition-content",
           type: "paragraph",
-          content: [{ type: "text", text: `Competition: ${idea.competition || "Identify direct and indirect competitors, their strengths and weaknesses"}`, styles: {} }]
+          content: `Competition: ${idea.competition || "Identify direct and indirect competitors, their strengths and weaknesses"}`
         },
         {
           id: "next-steps",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "🚀 Next Steps", styles: {} }]
+          content: "🚀 Next Steps"
         },
         {
           id: "steps-list",
           type: "numberedListItem",
-          content: [{ type: "text", text: "Validate the problem with potential users", styles: { italic: true } }]
+          content: "Validate the problem with potential users"
         },
         {
           id: "steps-list-2",
           type: "numberedListItem",
-          content: [{ type: "text", text: "Create a minimum viable product (MVP)", styles: { italic: true } }]
+          content: "Create a minimum viable product (MVP)"
         },
         {
           id: "steps-list-3",
           type: "numberedListItem",
-          content: [{ type: "text", text: "Test with early adopters and gather feedback", styles: { italic: true } }]
+          content: "Test with early adopters and gather feedback"
         },
         {
           id: "notes",
           type: "heading",
           props: { level: 2 },
-          content: [{ type: "text", text: "📋 Additional Notes", styles: {} }]
+          content: "📋 Additional Notes"
         },
         {
           id: "notes-content",
           type: "paragraph",
-          content: [{ type: "text", text: idea.notes || "Add any additional thoughts, resources, or considerations here...", styles: { italic: true } }]
+          content: idea.notes || "Add any additional thoughts, resources, or considerations here..."
         }
       ];
 
