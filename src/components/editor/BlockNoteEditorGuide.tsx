@@ -70,21 +70,21 @@ export function BlockNoteEditorGuide() {
           Editor Guide
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-[#1C1C1C]/90 border border-[#5A827E]/30 backdrop-blur-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-[#FAFFCA]">
             <FileText className="h-5 w-5 text-[#5A827E]" />
             BlockNote Editor Guide
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
-          <div className="text-center p-4 bg-[#5A827E]/10 border border-[#5A827E]/20 rounded-lg">
+          <div className="text-center p-4 bg-gradient-to-br from-[#5A827E]/20 to-[#B9D4AA]/10 border border-[#5A827E]/20 rounded-lg">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="h-5 w-5 text-[#B9D4AA]" />
               <span className="font-semibold text-[#B9D4AA]">Notion-style Editor</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-[#FAFFCA]/80">
               Experience the power of blocks with real-time collaboration
             </p>
           </div>
@@ -93,16 +93,16 @@ export function BlockNoteEditorGuide() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                className="flex items-start gap-3 p-3 bg-[#5A827E]/10 rounded-lg hover:bg-[#B9D4AA]/10 transition-colors border border-[#5A827E]/20"
               >
                 <div className={`p-2 rounded-md ${feature.color} text-white flex-shrink-0`}>
                   {feature.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-foreground mb-1">
+                  <h4 className="font-medium text-[#FAFFCA] mb-1">
                     {feature.title}
                   </h4>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-[#B9D4AA]/80">
                     {feature.description}
                   </p>
                 </div>
@@ -110,45 +110,11 @@ export function BlockNoteEditorGuide() {
             ))}
           </div>
 
-          <div className="border-t pt-4">
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Users className="h-4 w-4 text-[#5A827E]" />
-              Collaboration Features
-            </h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                  Live Connection
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  See real-time connection status
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  <Users className="h-3 w-3 mr-1" />
-                  Active Users
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  View collaborators currently editing
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  Live Cursors
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  See where others are typing
-                </span>
-              </div>
-            </div>
-          </div>
+
 
           <div className="bg-gradient-to-r from-[#5A827E]/10 to-[#B9D4AA]/10 border border-[#5A827E]/20 rounded-lg p-4">
             <h4 className="font-medium mb-2 text-[#5A827E]">Pro Tip</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-[#B9D4AA]/80">
               Start typing anywhere and use the '/' command to quickly insert any block type. 
               The editor automatically saves your changes and syncs with your collaborators in real-time!
             </p>

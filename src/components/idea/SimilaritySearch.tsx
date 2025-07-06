@@ -235,34 +235,50 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
     return firstUrl.replace(/[\[\]'",]/g, '').trim();
   };
 
+  // Add dynamic color helpers
+  const getMatchBadgeColor = (similarity: number) => {
+    if (similarity >= 0.8) return 'bg-[#22C55E] text-white'; // green
+    if (similarity >= 0.7) return 'bg-[#06B6D4] text-white'; // teal
+    if (similarity >= 0.6) return 'bg-[#3B82F6] text-white'; // blue
+    return 'bg-[#F59E42] text-white'; // orange
+  };
+  const getDescriptionColor = () => 'text-[#A1A1AA]';
+  const getUpvoteColor = () => 'text-[#4ADE80]';
+  const getCategoryBadgeColor = () => 'bg-[#334155] text-white';
+
+  const getMatchNumberColor = (similarity: number) => {
+    if (similarity >= 0.8) return 'text-[#22C55E]'; // green
+    if (similarity >= 0.7) return 'text-[#06B6D4]'; // teal
+    if (similarity >= 0.6) return 'text-[#3B82F6]'; // blue
+    return 'text-[#F59E42]'; // orange
+  };
+
   return (
     <div className="w-full space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5" />
+      <Card className="bg-[#232e2b] border border-[#5A827E]/40 text-white">
+        <CardHeader className="pb-3 bg-[#232e2b] border-b border-[#5A827E]/40">
+          <CardTitle className="flex items-center gap-2 text-lg text-white">
+            <Sparkles className="h-5 w-5 text-[#5A827E]" />
             Find Similar Startup Ideas
           </CardTitle>
-          <CardDescription>
-            Enhanced semantic matching with intelligent concept extraction and popularity weighting
-          </CardDescription>
+
         </CardHeader>
         
-        <CardContent className="space-y-4 pb-6">
+        <CardContent className="space-y-4 pb-6 pt-6">
           {/* Search Configuration */}
           <div className="space-y-3">
             {/* Current Idea Display */}
-            <div className="p-3 bg-muted/50 rounded-lg border">
+            <div className="p-3 bg-[#1C1C1C] rounded-lg border border-[#5A827E]/40 text-white">
               <div className="flex items-center gap-2 mb-2">
-                <Target className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium text-foreground">Searching for ideas similar to:</p>
+                <Target className="h-4 w-4 text-[#5A827E]" />
+                <p className="text-sm font-medium text-white">Searching for ideas similar to:</p>
               </div>
-              <p className="font-medium text-foreground mb-1">{currentIdea.title}</p>
-              <p className="text-sm text-muted-foreground line-clamp-2">
+              <p className="font-medium text-white mb-1">{currentIdea.title}</p>
+              <p className="text-sm text-white/80 line-clamp-2">
                 {currentIdea.description}
               </p>
               {currentIdea.category && (
-                <Badge variant="secondary" className="mt-2 text-xs">
+                <Badge variant="secondary" className="mt-2 text-xs bg-[#232e2b] text-white border border-[#5A827E]/40">
                   {currentIdea.category}
                 </Badge>
               )}
@@ -273,17 +289,17 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
               <Button
                 onClick={handleSearchCurrentIdea}
                 disabled={isSearching}
-                className="w-full"
+                className="w-full bg-[#1C1C1C] text-white border border-[#5A827E]/40 hover:bg-[#232e2b]"
                 size="default"
               >
                 {isSearching ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="h-4 w-4 animate-spin text-[#5A827E] mr-2" />
                     Analyzing...
                   </>
                 ) : (
                   <>
-                    <Search className="h-4 w-4 mr-2" />
+                    <Search className="h-4 w-4 mr-2 text-[#5A827E]" />
                     Find Similar Ideas
                   </>
                 )}
@@ -295,9 +311,9 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                   disabled={isSearching}
                   variant="outline"
                   size="sm"
-                  className="w-full text-xs"
+                  className="w-full text-xs bg-[#232e2b] text-white border border-[#5A827E]/40 hover:bg-[#1C1C1C]"
                 >
-                  <RefreshCw className="h-3 w-3 mr-2" />
+                  <RefreshCw className="h-3 w-3 mr-2 text-[#5A827E]" />
                   Refresh Search
                 </Button>
               )}
@@ -308,9 +324,9 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                   onClick={() => setShowDebug(!showDebug)}
                   variant="outline"
                   size="sm"
-                  className="w-full text-xs"
+                  className="w-full text-xs bg-[#232e2b] text-white border border-[#5A827E]/40 hover:bg-[#1C1C1C]"
                 >
-                  <Eye className="h-3 w-3 mr-2" />
+                  <Eye className="h-3 w-3 mr-2 text-[#5A827E]" />
                   {showDebug ? 'Hide' : 'Show'} AI Interpretation
                 </Button>
               )}
@@ -458,19 +474,19 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                   </div>
                 ) : (
                   results.ideas.map((idea: SimilarIdea, index: number) => (
-                    <Card key={idea.id} className="hover:shadow-md transition-all border-l-4 border-l-transparent hover:border-l-primary">
+                    <Card key={idea.id} className="hover:shadow-lg transition-all border-l-4 border-l-transparent hover:border-l-[#5A827E] bg-[#1C1C1C] border border-[#5A827E]/40 text-white">
                       <CardContent className="p-4">
                         {/* Header with improved spacing */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <Badge variant="secondary" className="text-xs font-mono px-2 py-1">
+                            <Badge variant="secondary" className="text-xs font-mono px-2 py-1 bg-[#232e2b] text-white border border-[#5A827E]/40">
                               #{idea.rank}
                             </Badge>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs font-medium px-2 py-1 ${getSimilarityColor(idea.similarity)}`}
-                            >
-                              {getSimilarityLabel(idea.similarity)} {idea.similarityPercentage}
+                            <Badge variant="outline" className="text-xs font-medium px-2 py-1 bg-[#232e2b] text-white border border-[#5A827E]/40 flex items-center gap-1">
+                              {getSimilarityLabel(idea.similarity)}
+                              <span className={getMatchNumberColor(idea.similarity)}>
+                                {idea.similarityPercentage}
+                              </span>
                             </Badge>
                           </div>
                           
@@ -478,7 +494,7 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="h-8 px-3 text-xs hover:bg-primary/10"
+                              className="h-8 px-3 text-xs bg-[#232e2b] text-white border border-[#5A827E]/40 hover:bg-[#1C1C1C]"
                               onClick={() => {
                                 const url = extractWebsiteUrl(idea.websites);
                                 if (url) {
@@ -486,7 +502,7 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                                 }
                               }}
                             >
-                              <ExternalLink className="h-4 w-4 mr-1" />
+                              <ExternalLink className="h-4 w-4 mr-1 text-[#5A827E]" />
                               Visit
                             </Button>
                           )}
@@ -494,27 +510,27 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
 
                         {/* Product Info with better typography */}
                         <div className="space-y-3">
-                          <h4 className="font-semibold text-base leading-tight text-foreground">
+                          <h4 className="font-semibold text-base leading-tight text-white">
                             {idea.name}
                           </h4>
                           
-                          <p className="text-sm text-muted-foreground leading-relaxed">
+                          <p className={`text-sm leading-relaxed ${getDescriptionColor()}`}> 
                             {idea.description}
                           </p>
 
                           {/* Enhanced Metrics */}
                           <div className="flex items-center gap-4 pt-2">
                             <div className="flex items-center gap-1">
-                              <TrendingUp className="h-4 w-4 text-green-600" />
-                              <span className="text-sm font-semibold text-green-700">
+                              <TrendingUp className="h-4 w-4 text-[#5A827E]" />
+                              <span className={`text-sm font-semibold ${getUpvoteColor()}`}> 
                                 {formatUpvotes(idea.upvotes || 0)}
                               </span>
-                              <span className="text-xs text-muted-foreground">upvotes</span>
+                              <span className="text-xs text-white/70">upvotes</span>
                             </div>
                             
                             {idea.category_tags && (
-                              <Badge variant="secondary" className="text-xs">
-                                {idea.category_tags.split(',')[0].replace(/['"[\]]/g, '')}
+                              <Badge variant="secondary" className={`text-xs ${getCategoryBadgeColor()} border border-[#5A827E]/40`}>
+                                {idea.category_tags.split(',')[0].replace(/['"\[\]]/g, '')}
                               </Badge>
                             )}
                           </div>

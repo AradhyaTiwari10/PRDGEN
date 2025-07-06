@@ -2,20 +2,24 @@
 
 /* Main editor container */
 .bn-container {
-  background: transparent !important;
-  color: hsl(var(--foreground)) !important;
+  background: #1C1C1C !important;
+  color: #FAFFCA !important;
+  border: 1.5px solid #5A827E !important;
+  border-radius: 1rem !important;
 }
 
 .bn-editor {
-  background: transparent !important;
-  color: hsl(var(--foreground)) !important;
+  background: #1C1C1C !important;
+  color: #FAFFCA !important;
   font-family: 'Inter', system-ui, sans-serif !important;
+  border: 1.5px solid #5A827E !important;
+  border-radius: 1rem !important;
 }
 
 /* Editor content area */
 .ProseMirror {
-  background: transparent !important;
-  color: hsl(var(--foreground)) !important;
+  background: #1C1C1C !important;
+  color: #FAFFCA !important;
   padding: 3rem 4rem !important;
   min-height: 100% !important;
   font-size: 16px !important;
@@ -33,23 +37,23 @@
 
 .bn-block-content {
   background: transparent !important;
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
 }
 
 .bn-inline-content {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
 }
 
 /* Block handles and buttons */
 .bn-block-side-menu {
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: linear-gradient(135deg, #1C1C1C 80%, #5A827E 100%) !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 24px 0 #5A827E22 !important;
 }
 
 .bn-block-side-menu button {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   background: transparent !important;
 }
 
@@ -60,14 +64,14 @@
 
 /* Formatting toolbar */
 .bn-formatting-toolbar {
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: linear-gradient(135deg, #1C1C1C 80%, #5A827E 100%) !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 24px 0 #5A827E22 !important;
 }
 
 .bn-formatting-toolbar button {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   background: transparent !important;
 }
 
@@ -78,19 +82,19 @@
 
 .bn-formatting-toolbar button[data-state="on"] {
   background: #5A827E !important;
-  color: white !important;
+  color: #FAFFCA !important;
 }
 
 /* Slash menu */
 .bn-slash-menu {
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: linear-gradient(135deg, #1C1C1C 80%, #5A827E 100%) !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 24px 0 #5A827E22 !important;
 }
 
 .bn-slash-menu-item {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   background: transparent !important;
 }
 
@@ -102,26 +106,26 @@
 
 .bn-slash-menu-item-selected {
   background: #5A827E !important;
-  color: white !important;
+  color: #FAFFCA !important;
 }
 
 /* Link toolbar */
 .bn-link-toolbar {
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: linear-gradient(135deg, #1C1C1C 80%, #5A827E 100%) !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 24px 0 #5A827E22 !important;
 }
 
 .bn-link-toolbar input {
   background: hsl(var(--input)) !important;
-  color: hsl(var(--foreground)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  color: #FAFFCA !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.375rem !important;
 }
 
 .bn-link-toolbar button {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   background: transparent !important;
 }
 
@@ -131,14 +135,14 @@
 
 /* Table menus */
 .bn-table-menu {
-  background: hsl(var(--background)) !important;
-  border: 1px solid hsl(var(--border)) !important;
+  background: linear-gradient(135deg, #1C1C1C 80%, #5A827E 100%) !important;
+  border: 1px solid #5A827E !important;
   border-radius: 0.5rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 24px 0 #5A827E22 !important;
 }
 
 .bn-table-menu button {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   background: transparent !important;
 }
 
@@ -148,7 +152,8 @@
 
 /* Placeholders */
 .ProseMirror p.is-empty::before {
-  color: hsl(var(--muted-foreground)) !important;
+  color: #B9D4AA !important;
+  opacity: 0.7;
   float: left;
   height: 0;
   pointer-events: none;
@@ -156,7 +161,7 @@
 
 /* Headings */
 .ProseMirror h1 {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   font-size: 2.5rem !important;
   font-weight: 700 !important;
   line-height: 1.2 !important;
@@ -164,7 +169,7 @@
 }
 
 .ProseMirror h2 {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   font-size: 2rem !important;
   font-weight: 600 !important;
   line-height: 1.3 !important;
@@ -172,7 +177,7 @@
 }
 
 .ProseMirror h3 {
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
   font-size: 1.5rem !important;
   font-weight: 600 !important;
   line-height: 1.4 !important;
@@ -188,7 +193,7 @@
 
 .ProseMirror li {
   margin: 0.25rem 0 !important;
-  color: hsl(var(--foreground)) !important;
+  color: #FAFFCA !important;
 }
 
 /* Blockquotes */
@@ -197,7 +202,8 @@
   padding-left: 1rem !important;
   margin: 1rem 0 !important;
   font-style: italic !important;
-  color: hsl(var(--muted-foreground)) !important;
+  color: #B9D4AA !important;
+  background: #5A827E22 !important;
 }
 
 /* Code blocks */
@@ -212,7 +218,7 @@
 }
 
 .ProseMirror code {
-  background: hsl(var(--muted)) !important;
+  background: #232e2b !important;
   color: #B9D4AA !important;
   padding: 0.125rem 0.25rem !important;
   border-radius: 0.25rem !important;
@@ -253,7 +259,8 @@
 
 /* Selection */
 .ProseMirror ::selection {
-  background: rgba(90, 130, 126, 0.3) !important;
+  background: #84AE92cc !important;
+  color: #1C1C1C !important;
 }
 
 /* Collaboration cursors */

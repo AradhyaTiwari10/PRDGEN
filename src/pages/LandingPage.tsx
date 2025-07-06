@@ -74,6 +74,7 @@ import { motion } from "framer-motion";
 import { IdeaVaultLogo } from "@/components/ui/idea-vault-logo";
 import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 import { CollaborationNotificationBanner } from "@/components/ui/collaboration-notification-banner";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 // Helper function to capitalize first letter
 const capitalizeFirst = (str: string) => {
@@ -271,6 +272,8 @@ export default function LandingPage() {
     }
   };
 
+  const [isNavigating, setIsNavigating] = useState(false);
+
   if (loading) {
     return (
       <div className="min-h-screen w-full relative overflow-hidden">
@@ -329,21 +332,21 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-3">
-                <Skeleton className="h-8 w-8 rounded-lg bg-white/10 border border-white/20" />
-                <Skeleton className="h-6 w-32 bg-white/10 border border-white/20" />
+                <Skeleton className="h-8 w-8 rounded-lg bg-[#232e2b] border border-[#5A827E]" />
+                <Skeleton className="h-6 w-32 bg-[#232e2b] border border-[#5A827E]" />
               </div>
               <div className="flex items-center space-x-4">
-                <Skeleton className="h-8 w-20 bg-white/10 border border-white/20" />
-                <Skeleton className="h-8 w-24 bg-white/10 border border-white/20" />
+                <Skeleton className="h-8 w-20 bg-[#232e2b] border border-[#5A827E]" />
+                <Skeleton className="h-8 w-24 bg-[#232e2b] border border-[#5A827E]" />
               </div>
             </div>
           </div>
         </header>
         <main className="relative z-20 flex flex-col items-center justify-center flex-1 py-12">
           <div className="text-center space-y-6">
-            <Skeleton className="h-16 w-96 bg-white/10 border border-white/20 mx-auto" />
-            <Skeleton className="h-6 w-80 bg-white/10 border border-white/20 mx-auto" />
-            <Skeleton className="h-12 w-64 bg-white/10 border border-white/20 mx-auto mt-8" />
+            <Skeleton className="h-16 w-96 bg-[#232e2b] border border-[#5A827E] mx-auto" />
+            <Skeleton className="h-6 w-80 bg-[#232e2b] border border-[#5A827E] mx-auto" />
+            <Skeleton className="h-12 w-64 bg-[#232e2b] border border-[#5A827E] mx-auto mt-8" />
           </div>
         </main>
       </div>
@@ -616,15 +619,13 @@ export default function LandingPage() {
                           {filteredIdeas.map((idea) => (
                             <Card
                               key={idea.id}
-                              className="group relative cursor-pointer hover:shadow-xl transition-all duration-300 ease-out flex flex-col h-full min-h-[280px] hover:scale-105 hover:-translate-y-2 transform-gpu overflow-hidden border border-[#5A827E] hover:border-[#84AE92] bg-[#5A827E]/20 backdrop-blur-md"
-                              onClick={() => navigate(`/idea/${idea.id}`)}
+                              className="relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30 hover:border-[#84AE92]"
+                              onClick={async () => {
+                                setIsNavigating(true);
+                                navigate(`/idea/${idea.id}`);
+                              }}
                             >
-                              {/* Hover Background Gradient */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#B9D4AA]/10 via-transparent to-[#84AE92]/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                              {/* Subtle Border Glow */}
-                              <div className="absolute inset-0 rounded-lg border border-[#B9D4AA]/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
+                              {isNavigating && <LoadingOverlay text="Loading idea..." />}
                               <CardHeader className="pb-2 relative z-10">
                                 <div className="flex justify-between items-start">
                                   <CardTitle className="text-lg text-white group-hover:text-[#B9D4AA] transition-colors duration-300">{idea.title}</CardTitle>

@@ -178,11 +178,11 @@ export function PRDGeneratorTab({ idea }: PRDGeneratorTabProps) {
   // If PRD exists, show it
   if (existingPRD) {
     return (
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 bg-[#1C1C1C] rounded-lg border border-[#5A827E]/40 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold">PRD for "{idea.title}"</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-lg font-semibold text-white">PRD for "{idea.title}"</h3>
+            <p className="text-sm text-white">
               Created on {new Date(existingPRD.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -191,6 +191,7 @@ export function PRDGeneratorTab({ idea }: PRDGeneratorTabProps) {
               variant="outline"
               size="sm"
               onClick={() => navigate(`/prd/${existingPRD.id}`)}
+              className="border-[#5A827E]/40 text-[#5A827E]"
             >
               <FileText className="h-4 w-4 mr-2" />
               View Full PRD
@@ -199,16 +200,16 @@ export function PRDGeneratorTab({ idea }: PRDGeneratorTabProps) {
               variant="outline"
               size="sm"
               onClick={() => setExistingPRD(null)}
+              className="border-[#5A827E]/40 text-[#5A827E]"
             >
               Generate New
             </Button>
           </div>
         </div>
-        
         {/* PRD Preview */}
-        <div className="bg-muted/30 rounded-lg p-4 max-h-96 overflow-y-auto">
+        <div className="bg-[#232e2b] rounded-lg p-4 max-h-96 overflow-y-auto border border-[#5A827E]/20">
           <div 
-            className="prose prose-sm max-w-none dark:prose-invert"
+            className="prose prose-sm max-w-none dark:prose-invert text-white"
             dangerouslySetInnerHTML={{
               __html: existingPRD.generated_prd
                 ?.replace(/\n/g, '<br>')

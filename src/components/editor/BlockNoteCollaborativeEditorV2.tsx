@@ -267,10 +267,10 @@ export function BlockNoteCollaborativeEditorV2({
 
   if (isLoading || !editor) {
     return (
-      <div className="flex items-center justify-center h-96 bg-background border border-border rounded-lg">
+      <div className="flex items-center justify-center h-96 bg-[#232e2b] border border-[#5A827E] rounded-lg">
         <div className="text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Loading collaborative editor...</p>
+          <div className="w-8 h-8 border-2 border-[#5A827E] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm text-white">Loading collaborative editor...</p>
         </div>
       </div>
     );

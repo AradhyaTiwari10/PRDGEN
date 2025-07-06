@@ -40,6 +40,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { Navbar } from "@/components/layout/navbar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 
 export default function IdeasPage() {
   const navigate = useNavigate();
@@ -63,7 +64,9 @@ export default function IdeasPage() {
     competition: "",
     notes: "",
     is_favorite: false,
+    attachments: [],
   });
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -96,6 +99,7 @@ export default function IdeasPage() {
         competition: "",
         notes: "",
         is_favorite: false,
+        attachments: [],
       });
     } catch (error) {
       console.error("Failed to create idea:", error);
@@ -112,35 +116,190 @@ export default function IdeasPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <>
+        <style>{`
+          @keyframes breathe {
+            0%, 100% {
+              transform: scale(1.85);
+            }
+            50% {
+              transform: scale(1.50);
+            }
+          }
+        `}</style>
+        <div className="min-h-screen w-full relative overflow-hidden">
+          {/* Background SVG */}
+          <div className="fixed inset-0 z-0">
+            <div 
+              className="absolute inset-0 scale-125 transform"
+              style={{
+                animation: 'breathe 8s ease-in-out infinite'
+              }}
+            >
+              <svg 
+                className="w-full h-full object-cover"
+                xmlns="http://www.w3.org/2000/svg" 
+                width="4000" 
+                height="4000" 
+                viewBox="-900 -900 4400 4400" 
+                fill="none" 
+                preserveAspectRatio="xMidYMid slice"
+              >
+                <g filter="url(#filter0_f)">
+                  <rect x="2143" y="455" width="1690" height="1690" rx="710.009" transform="rotate(90 2143 455)" fill="#84AE92" opacity="0.65" />
+                </g>
+                <g filter="url(#filter1_f)">
+                  <rect x="2126" y="474.675" width="1655.58" height="1653.6" rx="710.009" transform="rotate(90 2126 474.675)" fill="#B9D4AA" opacity="0.65" />
+                </g>
+                <g filter="url(#filter_common_f)">
+                  <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#5A827E" />
+                  <rect x="2057" y="576.304" width="1452.32" height="1515.8" rx="710.009" transform="rotate(90 2057 576.304)" fill="#FAFFCA" />
+                  <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#B9D4AA" opacity="0.65" />
+                </g>
+                <g filter="url(#filter5_f)">
+                  <rect x="1858" y="766.034" width="1084.79" height="1117.93" rx="483.146" transform="rotate(90 1858 766.034)" fill="#84AE92" />
+                </g>
+                <g filter="url(#filter6_f)">
+                  <rect x="1779" y="698.622" width="1178.25" height="962.391" rx="481.196" transform="rotate(90 1779 698.622)" fill="#5A827E" />
+                </g>
+                <defs>
+                  <filter id="filter0_f" x="0.074" y="2.074" width="2595.85" height="2595.85" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="140" />
+                  </filter>
+                  <filter id="filter1_f" x="250.311" y="252.587" width="2097.78" height="2099.76" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="60" />
+                  </filter>
+                  <filter id="filter_common_f" x="393" y="428" width="1812" height="1748" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="58" />
+                  </filter>
+                  <filter id="filter5_f" x="443.964" y="469.927" width="1710.14" height="1677" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="115" />
+                  </filter>
+                  <filter id="filter6_f" x="520.502" y="402.515" width="1554.6" height="1770.46" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="115" />
+                  </filter>
+                </defs>
+              </svg>
+            </div>
+          </div>
+          
+          {/* Gradient overlay */}
+          <div className="fixed inset-0 z-10">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/25"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/1 via-transparent to-black/15"></div>
+            <div className="absolute inset-0" style={{
+              background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.2) 100%)'
+            }}></div>
+          </div>
+          
+          <div className="relative z-20">
         <Navbar />
         <main className="container mx-auto py-8">
           <div className="flex justify-between items-center mb-8">
-            <Skeleton className="h-10 w-48 bg-[#5A827E]/20 border border-[#5A827E]/30" />
-            <Skeleton className="h-10 w-32 bg-[#5A827E]/20 border border-[#5A827E]/30" />
+            <Skeleton className="h-10 w-48 bg-[#232e2b] border border-[#5A827E]" />
+            <Skeleton className="h-10 w-32 bg-[#232e2b] border border-[#5A827E]" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card className="bg-black/40 backdrop-blur-md border border-white/10" key={i}>
+                  <Card className="bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30" key={i}>
                 <CardHeader>
-                  <Skeleton className="h-6 w-40 mb-2 bg-[#5A827E]/30 border border-[#B9D4AA]/30" />
-                  <Skeleton className="h-4 w-24 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-6 w-40 mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                  <Skeleton className="h-4 w-24 bg-[#232e2b] border border-[#5A827E]" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-4 w-full mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
-                  <Skeleton className="h-4 w-3/4 mb-2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
-                  <Skeleton className="h-4 w-1/2 bg-[#5A827E]/20 border border-[#B9D4AA]/20" />
+                  <Skeleton className="h-4 w-full mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                  <Skeleton className="h-4 w-3/4 mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                  <Skeleton className="h-4 w-1/2 bg-[#232e2b] border border-[#5A827E]" />
                 </CardContent>
               </Card>
             ))}
           </div>
         </main>
       </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      {isNavigating && <LoadingOverlay text="Loading idea..." />}
+      <style>{`
+        @keyframes breathe {
+          0%, 100% {
+            transform: scale(1.85);
+          }
+          50% {
+            transform: scale(1.50);
+          }
+        }
+      `}</style>
+      <div className="min-h-screen w-full relative overflow-hidden">
+        {/* Background SVG */}
+        <div className="fixed inset-0 z-0">
+          <div 
+            className="absolute inset-0 scale-125 transform"
+            style={{
+              animation: 'breathe 8s ease-in-out infinite'
+            }}
+          >
+            <svg 
+              className="w-full h-full object-cover"
+              xmlns="http://www.w3.org/2000/svg" 
+              width="4000" 
+              height="4000" 
+              viewBox="-900 -900 4400 4400" 
+              fill="none" 
+              preserveAspectRatio="xMidYMid slice"
+            >
+              <g filter="url(#filter0_f)">
+                <rect x="2143" y="455" width="1690" height="1690" rx="710.009" transform="rotate(90 2143 455)" fill="#84AE92" opacity="0.65" />
+              </g>
+              <g filter="url(#filter1_f)">
+                <rect x="2126" y="474.675" width="1655.58" height="1653.6" rx="710.009" transform="rotate(90 2126 474.675)" fill="#B9D4AA" opacity="0.65" />
+              </g>
+              <g filter="url(#filter_common_f)">
+                <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#5A827E" />
+                <rect x="2057" y="576.304" width="1452.32" height="1515.8" rx="710.009" transform="rotate(90 2057 576.304)" fill="#FAFFCA" />
+                <rect x="2018" y="582.866" width="1439.21" height="1437.8" rx="710.009" transform="rotate(90 2018 582.866)" fill="#B9D4AA" opacity="0.65" />
+              </g>
+              <g filter="url(#filter5_f)">
+                <rect x="1858" y="766.034" width="1084.79" height="1117.93" rx="483.146" transform="rotate(90 1858 766.034)" fill="#84AE92" />
+              </g>
+              <g filter="url(#filter6_f)">
+                <rect x="1779" y="698.622" width="1178.25" height="962.391" rx="481.196" transform="rotate(90 1779 698.622)" fill="#5A827E" />
+              </g>
+              <defs>
+                <filter id="filter0_f" x="0.074" y="2.074" width="2595.85" height="2595.85" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feGaussianBlur stdDeviation="140" />
+                </filter>
+                <filter id="filter1_f" x="250.311" y="252.587" width="2097.78" height="2099.76" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feGaussianBlur stdDeviation="60" />
+                </filter>
+                <filter id="filter_common_f" x="393" y="428" width="1812" height="1748" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feGaussianBlur stdDeviation="58" />
+                </filter>
+                <filter id="filter5_f" x="443.964" y="469.927" width="1710.14" height="1677" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feGaussianBlur stdDeviation="115" />
+                </filter>
+                <filter id="filter6_f" x="520.502" y="402.515" width="1554.6" height="1770.46" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                  <feGaussianBlur stdDeviation="115" />
+                </filter>
+              </defs>
+            </svg>
+          </div>
+        </div>
+        
+        {/* Gradient overlay */}
+        <div className="fixed inset-0 z-10">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/25"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/1 via-transparent to-black/15"></div>
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.2) 100%)'
+          }}></div>
+        </div>
+
+        <div className="relative z-20">
       <Navbar />
 
       {/* Main Content */}
@@ -151,12 +310,12 @@ export default function IdeasPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate(-1)}
-              className="gap-2"
+              className="gap-2 text-[#FAFFCA] hover:bg-[#5A827E]/20"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-            <h1 className="text-3xl font-bold">My Ideas</h1>
+            <h1 className="text-3xl font-bold text-[#FAFFCA]">My Ideas</h1>
           </div>
           <Dialog
             open={isCreateDialogOpen}
@@ -337,11 +496,14 @@ export default function IdeasPage() {
           {filteredIdeas.map((idea) => (
             <Card
               key={idea.id}
-              className="relative cursor-pointer hover:shadow-md transition-shadow flex flex-col h-full"
-              onClick={() => navigate(`/idea/${idea.id}`)}
+              className="relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30 hover:border-[#84AE92]"
+              onClick={async () => {
+                setIsNavigating(true);
+                navigate(`/idea/${idea.id}`);
+              }}
             >
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold">
+                <CardTitle className="text-xl font-bold text-[#FAFFCA]">
                   {idea.title}
                 </CardTitle>
                 <Button
@@ -360,7 +522,7 @@ export default function IdeasPage() {
                 </Button>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-4">{idea.description}</p>
+                <p className="text-[#B9D4AA]/80 mb-4">{idea.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -421,5 +583,7 @@ export default function IdeasPage() {
         </div>
       </main>
     </div>
+      </div>
+    </>
   );
 }

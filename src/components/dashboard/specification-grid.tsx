@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SpecificationGridProps {
   specifications: PRD[];
@@ -92,6 +93,32 @@ export function SpecificationGrid({
       setDeletingId(null);
     }
   };
+
+  if (deletingId) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-32 bg-[#232e2b] border border-[#5A827E]" />
+          <Skeleton className="h-10 w-32 bg-[#232e2b] border border-[#5A827E]" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30">
+              <CardHeader>
+                <Skeleton className="h-6 w-40 mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                <Skeleton className="h-4 w-24 bg-[#232e2b] border border-[#5A827E]" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                <Skeleton className="h-4 w-3/4 mb-2 bg-[#232e2b] border border-[#5A827E]" />
+                <Skeleton className="h-4 w-1/2 bg-[#232e2b] border border-[#5A827E]" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -177,7 +204,7 @@ export function SpecificationGrid({
                           disabled={deletingId === specification.id}
                         >
                           {deletingId === specification.id ? (
-                            <span className="loading-spinner"></span>
+                            <Skeleton className="h-8 w-32 bg-[#232e2b] border border-[#5A827E] text-white" />
                           ) : (
                             <Trash2 className="h-4 w-4" />
                           )}

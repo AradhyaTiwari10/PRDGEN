@@ -335,20 +335,10 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
 
   if (loading) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Bot className="h-5 w-5 text-primary" />
-            AI Assistant
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading assistant...
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center h-64 bg-[#232e2b] border border-[#5A827E] rounded-lg">
+        <Loader2 className="h-6 w-6 animate-spin text-[#5A827E] mb-3" />
+        <div className="text-center text-white text-sm">Loading assistant...</div>
+      </div>
     );
   }
 
@@ -381,30 +371,8 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-lg border">
-      <div className="flex-shrink-0 p-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Nexi</h3>
-          </div>
-          {conversations.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearConversation}
-              disabled={isNexiActive}
-              className="text-muted-foreground hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isNexiActive ? "Please wait for Nexi to finish responding" : "Clear conversation"}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your AI product development assistant for "{idea.title}" Brainstorm with Nexi!!
-        </p>
-      </div>
+    <div className="h-full flex flex-col bg-[#1C1C1C] rounded-lg border border-[#5A827E]/40 backdrop-blur-md">
+
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
@@ -413,11 +381,11 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
               {welcomeTypingMessage && (
                 <div className="flex gap-3 justify-start animate-in slide-in-from-left-2 duration-300">
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-                      <Bot className="h-4 w-4 text-primary" />
+                    <div className="w-8 h-8 rounded-full bg-[#5A827E]/30 flex items-center justify-center animate-pulse">
+                      <Bot className="h-4 w-4 text-[#5A827E]" />
                     </div>
                   </div>
-                  <div className="max-w-[80%] rounded-lg px-4 py-3 bg-muted border border-primary/10 shadow-sm">
+                  <div className="max-w-[80%] rounded-lg px-4 py-3 bg-[#232e2b] border border-[#5A827E]/40 shadow-sm text-white">
                     <TypingAnimation
                       text={welcomeTypingMessage}
                       onComplete={handleWelcomeTypingComplete}
@@ -444,8 +412,8 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
                 >
                   {conv.role === 'assistant' && (
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-primary" />
+                      <div className="w-8 h-8 rounded-full bg-[#5A827E]/30 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-[#5A827E]" />
                       </div>
                     </div>
                   )}
@@ -453,8 +421,8 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-3 ${
                       conv.role === 'user'
-                        ? 'bg-primary text-primary-foreground ml-auto'
-                        : 'bg-muted'
+                        ? 'bg-[#232e2b] text-white ml-auto border border-[#5A827E]/40'
+                        : 'bg-[#232e2b] text-white border border-[#5A827E]/40'
                     }`}
                   >
                     {conv.role === 'assistant' ? (
@@ -535,8 +503,8 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
                   
                   {conv.role === 'user' && (
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="h-4 w-4" />
+                      <div className="w-8 h-8 rounded-full bg-[#5A827E]/30 flex items-center justify-center">
+                        <User className="h-4 w-4 text-[#5A827E]" />
                       </div>
                     </div>
                   )}
@@ -548,11 +516,11 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
             {typingMessage && (
               <div className="flex gap-3 justify-start animate-in slide-in-from-left-2 duration-300">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
-                    <Bot className="h-4 w-4 text-primary" />
+                  <div className="w-8 h-8 rounded-full bg-[#5A827E]/30 flex items-center justify-center animate-pulse">
+                    <Bot className="h-4 w-4 text-[#5A827E]" />
                   </div>
                 </div>
-                <div className="max-w-[80%] rounded-lg px-4 py-3 bg-muted border border-primary/10 shadow-sm">
+                <div className="max-w-[80%] rounded-lg px-4 py-3 bg-[#232e2b] border border-[#5A827E]/40 shadow-sm text-white">
                   <TypingAnimation
                     text={typingMessage}
                     onComplete={handleTypingComplete}
@@ -565,19 +533,19 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
             {sending && !typingMessage && (
               <div className="flex gap-3 justify-start animate-in slide-in-from-left-2 duration-300">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-primary animate-pulse" />
+                  <div className="w-8 h-8 rounded-full bg-[#5A827E]/30 flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-[#5A827E] animate-pulse" />
                   </div>
                 </div>
-                <div className="bg-muted rounded-lg px-4 py-3 border border-primary/5">
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <div className="bg-gradient-to-br from-[#5A827E]/40 to-[#B9D4AA]/20 rounded-lg px-4 py-3 border border-[#5A827E]/30">
+                  <div className="flex items-center gap-3 text-[#FAFFCA]">
+                    <Loader2 className="h-4 w-4 animate-spin text-[#B9D4AA]" />
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-medium">Nexi is thinking</span>
                       <div className="flex gap-1">
-                        <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="w-1 h-1 bg-[#5A827E] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-1 h-1 bg-[#5A827E] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-1 h-1 bg-[#5A827E] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
                   </div>
@@ -588,7 +556,7 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
         </ScrollArea>
       </div>
 
-      <div className={`flex-shrink-0 border-t p-4 transition-opacity duration-200 ${isNexiActive ? 'opacity-75' : ''}`}>
+      <div className={`flex-shrink-0 border-t border-[#5A827E]/40 p-4 transition-opacity duration-200 ${isNexiActive ? 'opacity-75' : ''} bg-[#232e2b]`}>
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             ref={inputRef}
@@ -600,14 +568,14 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
                 : "Ask about your idea..."
             }
             disabled={isNexiActive}
-            className="flex-1 disabled:cursor-not-allowed"
+            className="flex-1 disabled:cursor-not-allowed bg-[#232e2b] text-white placeholder-white border border-[#5A827E]/40"
           />
           <Button
             type="submit"
             disabled={!message.trim() || isNexiActive}
             size="sm"
             title={isNexiActive ? "Please wait for Nexi to finish responding" : "Send message"}
-            className="disabled:cursor-not-allowed"
+            className="disabled:cursor-not-allowed bg-[#5A827E] text-white border border-[#5A827E]/40"
           >
             {isNexiActive ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -617,9 +585,9 @@ export function IdeaAssistant({ idea }: IdeaAssistantProps) {
           </Button>
         </form>
         {isNexiActive && (
-          <div className="flex items-center justify-center mt-2 text-xs text-muted-foreground">
+          <div className="flex items-center justify-center mt-2 text-xs text-white">
             <div className="flex items-center gap-1">
-              <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+              <div className="w-1 h-1 bg-[#5A827E] rounded-full animate-pulse"></div>
               <span>Nexi is {sending ? 'thinking' : 'typing'}...</span>
             </div>
           </div>
