@@ -1,6 +1,6 @@
 export const generatePRD = async (idea: string, category: string, targetAudience: string) => {
   try {
-    const response = await fetch('/api/generate-prd', {
+    const response = await fetch('http://localhost:8081/api/generate-prd', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

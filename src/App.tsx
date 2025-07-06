@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -17,16 +22,13 @@ import TermsOfServicePage from "@/app/terms/page";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="prd-genie-theme">
+    <ThemeProvider>
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route
-            path="/dashboard"
-            element={<Navigate to="/" replace />}
-          />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route
             path="/generate"
             element={
@@ -51,7 +53,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/auth-debug" element={<div className="min-h-screen bg-background p-8"><AuthDebug /></div>} />
+          <Route
+            path="/auth-debug"
+            element={
+              <div className="min-h-screen bg-background p-8">
+                <AuthDebug />
+              </div>
+            }
+          />
           <Route path="/404-demo" element={<GhostNotFound />} />
           <Route path="/test-404" element={<TestGhost404 />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />

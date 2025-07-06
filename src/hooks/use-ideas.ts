@@ -7,53 +7,34 @@ import { useAuth } from './use-auth';
 export function useIdeas() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [collections, setCollections] = useState<IdeaCollection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const fetchIdeas = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Fetch user's own ideas
+      // Fetch user's own ideas only (simplified - no collaboration)
       const { data: ownIdeas, error: ownError } = await supabase
         .from('ideas')
-        .select('id, title, description, content, category, status, priority, market_size, competition, notes, is_favorite, user_id, created_at, updated_at')
+        .select('id, title, description, content, category, status, priority, market_size, competition, notes, is_favorite, user_id, created_at, updated_at, attachments')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (ownError) throw ownError;
 
-      // Fetch shared ideas (ideas shared with this user)
-      const { data: sharedIdeasData, error: sharedError } = await supabase
-        .from('shared_ideas')
-        .select(`
-          idea_id,
-          permission_level,
-          ideas!inner(id, title, description, content, category, status, priority, market_size, competition, notes, is_favorite, user_id, created_at, updated_at, attachments, target_audience)
-        `)
-        .eq('collaborator_id', user.id);
+      // Add missing properties for consistency with the Idea type
+      const ideasWithDefaults: Idea[] = (ownIdeas || []).map(idea => ({
+        ...idea,
+        attachments: idea.attachments || [],
+        target_audience: '', // Set default value
+        is_shared: false, // No collaboration for now
+      }));
 
-      let sharedIdeas: Idea[] = [];
-      if (!sharedError && sharedIdeasData) {
-        sharedIdeas = sharedIdeasData.map(shared => ({
-          ...shared.ideas,
-          is_shared: true,
-          permission_level: shared.permission_level,
-          attachments: shared.ideas.attachments || [],
-          target_audience: shared.ideas.target_audience || ''
-        })) as unknown as Idea[];
-      }
-
-      // Combine own ideas and shared ideas
-      const allIdeas = [...(ownIdeas || []), ...sharedIdeas];
-
-      // Sort by created_at descending
-      allIdeas.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      setIdeas(allIdeas);
+      setIdeas(ideasWithDefaults);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch ideas');
       toast({
@@ -252,39 +233,22 @@ export function useIdeas() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check if user owns the idea or has write permission
-      const currentIdea = ideas.find(idea => idea.id === id);
-      if (!currentIdea) {
-        throw new Error('Idea not found');
-      }
-
-      // If it's a shared idea, check write permission
-      if (currentIdea.is_shared && currentIdea.permission_level === 'view') {
-        throw new Error('You do not have edit permission for this idea');
-      }
-
-      // Build the query
-      let query = supabase
+      // Simplified - only update user's own ideas
+      const { data, error } = await supabase
         .from('ideas')
         .update(updates)
-        .eq('id', id);
-
-      // Only add user_id check if it's not a shared idea
-      if (!currentIdea.is_shared) {
-        query = query.eq('user_id', user.id);
-      }
-
-      // Use maybeSingle() instead of single() to handle cases where no rows are updated
-      const { data, error } = await query.select().maybeSingle();
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .maybeSingle();
 
       if (error) throw error;
 
-      // If no data returned, it means the update didn't affect any rows
       if (!data) {
         throw new Error('Failed to update idea - no rows affected');
       }
 
-      setIdeas(prev => prev.map(idea => idea.id === id ? { ...data, is_shared: idea.is_shared, permission_level: idea.permission_level } : idea));
+      setIdeas(prev => prev.map(idea => idea.id === id ? { ...data, attachments: data.attachments || [], target_audience: '', is_shared: false } : idea));
       toast({
         title: 'Success',
         description: 'Idea updated successfully',
@@ -356,12 +320,13 @@ export function useIdeas() {
     if (isAuthenticated && user) {
       fetchIdeas();
       fetchCollections();
-    } else {
-      // Clear data when user is not authenticated
+    } else if (isAuthenticated === false) {
+      // Only clear and set loading false when we're certain user is not authenticated
       setIdeas([]);
       setCollections([]);
       setLoading(false);
     }
+    // If isAuthenticated is still undefined (loading), keep loading true
   }, [isAuthenticated, user]);
 
   return {
