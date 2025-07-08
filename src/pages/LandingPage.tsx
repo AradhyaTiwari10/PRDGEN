@@ -19,16 +19,6 @@ import {
 
 import { usePRDs } from "@/hooks/use-prds";
 import { useIdeas } from "@/hooks/use-ideas";
-import { SimpleAnimatedTabs } from "@/components/ui/simple-animated-tabs";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EnhancedSearch, SearchFilters } from "@/components/ui/enhanced-search";
 import {
   filterIdeas,
@@ -72,6 +62,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 import { motion } from "framer-motion";
 import { IdeaVaultLogo } from "@/components/ui/idea-vault-logo";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Helper function to capitalize first letter
 const capitalizeFirst = (str: string) => {
@@ -731,18 +722,18 @@ export default function LandingPage() {
                 <PromptInputTextarea
                   animatedPlaceholder={{
                     texts: [
-                      "create a mobile app that helps students find study groups nearby",
-                      "build a SaaS platform for small businesses to manage their inventory",
-                      "design an AI-powered tool that creates personalized workout plans",
-                      "develop a web app that connects freelancers with local businesses",
-                      "invent a smart home device that optimizes energy consumption",
-                      "launch a social platform for pet owners to arrange playdates",
-                      "make an educational app that gamifies learning coding",
-                      "start a marketplace for sustainable and eco-friendly products",
-                      "help me brainstorm a revolutionary tech startup idea",
-                      "analyze the market potential for my product concept",
+                      "create an online platform for students to find study groups and collaborate",
+                      "build a cloud-based solution for small businesses to streamline inventory management",
+                      "develop an AI-driven application that generates personalized workout routines",
+                      "establish a web platform connecting freelancers with local businesses for projects",
+                      "innovate a smart home device that efficiently manages energy consumption",
+                      "launch an online community for pet owners to schedule pet playdates",
+                      "develop an educational app that makes learning coding fun and interactive",
+                      "create an online marketplace for sustainable and eco-friendly products",
+                      "brainstorm a cutting-edge tech startup idea for the digital age",
+                      "evaluate the market potential for my online product concept",
                     ],
-                    prefix: "With Nexi ",
+                    prefix: "",
                   }}
                   className="text-[#FAFFCA] placeholder-[#B9D4AA]/80 bg-transparent"
                 />
@@ -812,198 +803,139 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Collaboration Notification Banner */}
-                {/* Removed CollaborationNotificationBanner */}
-
-                <SimpleAnimatedTabs
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                  tabs={[
-                    {
-                      id: "ideas",
-                      label: "Ideas",
-                      icon: <FileText className="h-4 w-4" />,
-                      content: (
-                        <div className="space-y-6">
-                          {/* Enhanced Search Component */}
-                          <EnhancedSearch
-                            onFiltersChange={setSearchFilters}
-                            placeholder="Search ideas by title, description, category..."
-                            categories={ideaCategories}
-                            className="mb-6 bg-[#5A827E]/30 border-[#84AE92]"
-                          />
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {filteredIdeas.map((idea) => (
-                              <Card
-                                key={idea.id}
-                                className="relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30 hover:border-[#84AE92]"
-                                onClick={async () => {
-                                  navigate(`/idea/${idea.id}`);
-                                }}
-                              >
-                                <CardHeader className="pb-2 relative z-10">
-                                  <div className="flex justify-between items-start">
-                                    <CardTitle className="text-lg text-white group-hover:text-[#B9D4AA] transition-colors duration-300">
-                                      {idea.title}
-                                    </CardTitle>
-                                    <div className="flex items-center space-x-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-[#B9D4AA] hover:text-[#FAFFCA] hover:bg-[#84AE92]/20"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleFavorite(idea);
-                                        }}
-                                      >
-                                        {idea.is_favorite ? (
-                                          <Star className="h-4 w-4 text-yellow-400" />
-                                        ) : (
-                                          <StarOff className="h-4 w-4" />
-                                        )}
-                                      </Button>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-red-400 hover:text-red-300 hover:bg-[#84AE92]/20"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="bg-gray-900/95 backdrop-blur-md border-white/20">
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle className="text-white">
-                                              Delete Idea
-                                            </AlertDialogTitle>
-                                            <AlertDialogDescription className="text-white/70">
-                                              Are you sure you want to delete
-                                              this idea? This action cannot be
-                                              undone.
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel className="bg-white/10 text-white border-white/20 hover:bg-white/20">
-                                              Cancel
-                                            </AlertDialogCancel>
-                                            <AlertDialogAction
-                                              onClick={() =>
-                                                handleDeleteIdea(idea.id)
-                                              }
-                                              className="bg-red-600 text-white hover:bg-red-700"
-                                            >
-                                              Delete
-                                            </AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </div>
-                                  </div>
-                                </CardHeader>
-                                <CardContent className="flex flex-col flex-1 relative z-10">
-                                  <div className="flex-1">
-                                    <p className="text-sm text-white/80 line-clamp-3 group-hover:text-white transition-colors duration-300">
-                                      {idea.description}
-                                    </p>
-                                  </div>
-                                  <div className="mt-auto space-y-4">
-                                    <div className="flex flex-wrap gap-2">
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
-                                        {capitalizeFirst(idea.status)}
-                                      </span>
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
-                                        {capitalizeFirst(idea.priority)}
-                                      </span>
-                                      {idea.is_shared && (
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/30 text-blue-200 group-hover:bg-blue-500/40 group-hover:scale-105 transition-all duration-300">
-                                          <svg
-                                            className="h-3 w-3 mr-1"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                            />
-                                          </svg>
-                                          Shared ({idea.permission_level})
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex flex-col gap-4 mt-6">
-                                      <InteractiveHoverButton
-                                        text="Generate PRD for AI Tools"
-                                        variant="outline"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleGeneratePRD(idea);
-                                        }}
-                                        className="text-sm px-4 py-3 w-full min-h-[44px] flex items-center justify-center font-medium border-white/30 text-white hover:bg-white/10"
-                                      />
-                                      <div
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-full flex gap-3"
-                                      >
-                                        {/* Removed CollaborationRequestModal */}
-                                        {/* Removed CollaboratorsManagement */}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      id: "shared",
-                      label: "Shared with Me",
-                      icon: (
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                      ),
-                      content: (
-                        <div className="flex items-center justify-center p-8 text-center">
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-medium text-[#FAFFCA]">
-                              Collaboration Features Temporarily Disabled
-                            </h3>
-                            <p className="text-[#B9D4AA]">
-                              Shared ideas functionality is currently under
-                              maintenance.
-                            </p>
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      id: "prds",
-                      label: "PRDs",
-                      icon: <Zap className="h-4 w-4" />,
-                      content: <PRDGrid prds={prds} deletePRD={deletePRD} />,
-                    },
-                  ]}
+                {/* Enhanced Search Component */}
+                <EnhancedSearch
+                  onFiltersChange={setSearchFilters}
+                  placeholder="Search ideas by title, description, category..."
+                  categories={ideaCategories}
+                  className="mb-6 bg-[#5A827E]/30 border-[#84AE92]"
                 />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredIdeas.map((idea) => (
+                    <Card
+                      key={idea.id}
+                      className="relative cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col h-full bg-[#1C1C1C]/80 backdrop-blur-md border border-[#5A827E]/30 hover:border-[#84AE92]"
+                      onClick={async () => {
+                        navigate(`/idea/${idea.id}`);
+                      }}
+                    >
+                      <CardHeader className="pb-2 relative z-10">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg text-white group-hover:text-[#B9D4AA] transition-colors duration-300">
+                            {idea.title}
+                          </CardTitle>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-[#B9D4AA] hover:text-[#FAFFCA] hover:bg-[#84AE92]/20"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(idea);
+                              }}
+                            >
+                              {idea.is_favorite ? (
+                                <Star className="h-4 w-4 text-yellow-400" />
+                              ) : (
+                                <StarOff className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-400 hover:text-red-300 hover:bg-[#84AE92]/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-gray-900/95 backdrop-blur-md border-white/20">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white">
+                                    Delete Idea
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="text-white/70">
+                                    Are you sure you want to delete this idea?
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteIdea(idea.id)}
+                                    className="bg-red-600 text-white hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col flex-1 relative z-10">
+                        <div className="flex-1">
+                          <p className="text-sm text-white/80 line-clamp-3 group-hover:text-white transition-colors duration-300">
+                            {idea.description}
+                          </p>
+                        </div>
+                        <div className="mt-auto space-y-4">
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
+                              {capitalizeFirst(idea.status)}
+                            </span>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
+                              {capitalizeFirst(idea.priority)}
+                            </span>
+                            {idea.is_shared && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/30 text-blue-200 group-hover:bg-blue-500/40 group-hover:scale-105 transition-all duration-300">
+                                <svg
+                                  className="h-3 w-3 mr-1"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                  />
+                                </svg>
+                                Shared ({idea.permission_level})
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-4 mt-6">
+                            <InteractiveHoverButton
+                              text="Generate PRD for AI Tools"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGeneratePRD(idea);
+                              }}
+                              className="text-sm px-4 py-3 w-full min-h-[44px] flex items-center justify-center font-medium border-white/30 text-white hover:bg-white/10"
+                            />
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full flex gap-3"
+                            >
+                              {/* Removed CollaborationRequestModal */}
+                              {/* Removed CollaboratorsManagement */}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </>
           ) : (

@@ -969,7 +969,7 @@ export default function DetailedIdeaPage() {
                         className="flex items-center gap-1 text-xs font-medium data-[state=active]:bg-[#1C1C1C] data-[state=active]:text-[#FAFFCA] text-[#B9D4AA] transition-all py-1"
                       >
                         <Sparkles className="h-3 w-3" />
-                        Similar
+                        Similar Ideas
                       </TabsTrigger>
                       <TabsTrigger
                         value="prd"
