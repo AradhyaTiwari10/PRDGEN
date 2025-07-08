@@ -685,7 +685,7 @@ export default function DashboardPage() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex flex-col gap-4 mt-6">
+                            {/* <div className="flex flex-col gap-4 mt-6">
                               <InteractiveHoverButton
                                 text="Generate PRD for AI Tools"
                                 variant="outline"
@@ -750,7 +750,7 @@ export default function DashboardPage() {
                                   }
                                 />
                               </div>
-                            </div>
+                            </div> */}
                           </div>
                         </CardContent>
                       </Card>

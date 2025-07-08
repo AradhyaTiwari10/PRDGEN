@@ -886,7 +886,7 @@ export default function LandingPage() {
                             {idea.description}
                           </p>
                         </div>
-                        <div className="mt-auto space-y-4">
+                        <div className="mt-4 space-y-4">
                           <div className="flex flex-wrap gap-2">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white group-hover:bg-white/30 group-hover:scale-105 transition-all duration-300">
                               {capitalizeFirst(idea.status)}
@@ -913,7 +913,7 @@ export default function LandingPage() {
                               </span>
                             )}
                           </div>
-                          <div className="flex flex-col gap-4 mt-6">
+                          {/* <div className="flex flex-col gap-4 mt-6">
                             <InteractiveHoverButton
                               text="Generate PRD for AI Tools"
                               variant="outline"
@@ -923,14 +923,7 @@ export default function LandingPage() {
                               }}
                               className="text-sm px-4 py-3 w-full min-h-[44px] flex items-center justify-center font-medium border-white/30 text-white hover:bg-white/10"
                             />
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-full flex gap-3"
-                            >
-                              {/* Removed CollaborationRequestModal */}
-                              {/* Removed CollaboratorsManagement */}
-                            </div>
-                          </div>
+                          </div> */}
                         </div>
                       </CardContent>
                     </Card>
