@@ -423,8 +423,8 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
             <div className="space-y-3">
               <Separator />
               
-              {/* Fallback Warning */}
-              {results.fallback && (
+              {/* Search Status */}
+              {results.fallback ? (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                   <div className="flex items-start gap-2">
                     <Database className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -434,6 +434,20 @@ export function SimilaritySearch({ currentIdea }: SimilaritySearchProps) {
                       </p>
                       <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                         Using fallback search mode. Results may be limited.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Database className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                        Product Hunt Database Search
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                        Searching 120,000+ real Product Hunt products for similar ideas.
                       </p>
                     </div>
                   </div>

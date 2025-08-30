@@ -168,47 +168,47 @@ serve(async (req) => {
 
     console.log(`🔍 Searching for: "${query}" with limit: ${limit}, minSimilarity: ${minSimilarity}`);
 
-    // Get Supabase connection
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    // Get Product Hunt database connection (Supabase 2)
+    const productHuntUrl = Deno.env.get('VITE_SUPABASE_URL_2');
+    const productHuntKey = Deno.env.get('VITE_SUPABASE_ANON_KEY_2');
     
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase credentials not configured');
+    if (!productHuntUrl || !productHuntKey) {
+      throw new Error('Product Hunt database credentials not configured');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const productHuntSupabase = createClient(productHuntUrl, productHuntKey);
 
-    // Search in the ideas table - cast query for broader search
+    // Search in the Product Hunt products table
     const searchQuery = query.substring(0, 100); // Limit query length
-    const { data: ideas, error } = await supabase
-        .from('ideas')
-      .select('id, title, description, category, created_at, user_id')
-      .or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`)
-      .limit(Math.min(limit * 3, 50)); // Get more results for better filtering
+    const { data: products, error } = await productHuntSupabase
+        .from('product_hunt_products')
+        .select('id, name, product_description, category_tags, upvotes, websites, makers')
+        .or(`name.ilike.%${searchQuery}%,product_description.ilike.%${searchQuery}%,category_tags.ilike.%${searchQuery}%`)
+        .limit(Math.min(limit * 3, 50)); // Get more results for better filtering
 
     if (error) {
       console.error('Database search error:', error);
       throw new Error(`Search failed: ${error.message}`);
       }
 
-    console.log(`📊 Found ${ideas?.length || 0} potential matches`);
+    console.log(`📊 Found ${products?.length || 0} potential matches from Product Hunt`);
 
     // Calculate similarity scores and filter
-    const results = (ideas || [])
-      .map((idea: any, index: number) => {
-        const similarity = calculateSimilarity(query, idea.title, idea.description, idea.category);
+    const results = (products || [])
+      .map((product: any, index: number) => {
+        const similarity = calculateSimilarity(query, product.name, product.product_description, product.category_tags);
          
          return {
            rank: index + 1,
-           id: idea.id,
-           name: idea.title,
-           description: idea.description,
+           id: product.id,
+           name: product.name,
+           description: product.product_description,
            similarity: Math.round(similarity * 100) / 100,
            similarityPercentage: `${Math.round(similarity * 100)}%`,
-          upvotes: Math.floor(Math.random() * 100), // Mock upvotes for display
-          category_tags: idea.category,
-          websites: null,
-          makers: null
+          upvotes: product.upvotes || 0,
+          category_tags: product.category_tags,
+          websites: product.websites,
+          makers: product.makers
         };
       })
       .filter((idea: any) => idea.similarity >= minSimilarity)
@@ -228,8 +228,8 @@ serve(async (req) => {
         query,
         totalFound: results.length,
         searchParams: { limit, minSimilarity },
-        fallback: true,
-        message: 'Searching your ideas database for similar concepts'
+        fallback: false,
+        message: 'Searching Product Hunt database for similar products'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

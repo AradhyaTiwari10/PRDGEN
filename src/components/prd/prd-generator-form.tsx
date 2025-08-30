@@ -74,19 +74,21 @@ export function PRDGeneratorTab({ idea }: PRDGeneratorTabProps) {
   }, [idea.id]);
 
   const generatePRDContent = async (data: PRDGenerationData) => {
-    const response = await fetch('http://localhost:8081/api/generate-prd-deepseek', {
+    const response = await fetch('http://localhost:8081/api/generate-prd', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        idea: data.idea
+        idea: data.idea,
+        category: idea.category,
+        targetAudience: idea.target_audience
       }),
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-      throw new Error(error.error?.message || `Deepseek API error: ${response.status}`);
+      throw new Error(error.error?.message || `Gemini API error: ${response.status}`);
     }
 
     const result = await response.json();

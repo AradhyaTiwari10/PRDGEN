@@ -112,19 +112,24 @@ export function useSimilaritySearch() {
     const startTime = Date.now();
 
     try {
-      // First try the Supabase edge function
-      const { data, error } = await supabase.functions.invoke('similarity-search', {
-        body: { 
+      // Use local API server (which now connects to Product Hunt database)
+      const response = await fetch('http://localhost:8081/api/similarity-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           query: query.trim(),
           limit: 100, // Request more results for better filtering
           minSimilarity: 0.2 // Slightly higher base threshold
-        }
+        }),
       });
 
-      if (error) {
-        console.warn('Supabase edge function failed, trying local API:', error);
-        throw new Error('Edge function failed');
+      if (!response.ok) {
+        throw new Error(`Local API error: ${response.status}`);
       }
+
+      const data = await response.json();
 
       // Enhanced result processing with improved scoring
       const allResults = data?.results || [];
@@ -161,60 +166,10 @@ export function useSimilaritySearch() {
         await saveSearchResults(ideaId, query.trim(), searchResult);
       }
 
-    } catch (edgeFunctionError) {
-      console.log('🔄 Edge function failed, trying local API fallback...');
-      
-      try {
-        // Fallback to local API server
-        const response = await fetch('http://localhost:8081/api/similarity-search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: query.trim(),
-            limit: 50, // Request more for filtering
-            minSimilarity: 0.1
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Local API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const allResults = data.results || [];
-        
-        // Apply 50% similarity filter
-        const highQualityResults = allResults.filter(
-          (result: SimilarIdea) => result.similarity >= minSimilarity
-        );
-        
-        const finalResults = highQualityResults.slice(0, limit);
-        const searchTime = Date.now() - startTime;
-
-        const searchResult: SimilaritySearchResult = {
-          ideas: finalResults,
-          query: query.trim(),
-          searchTime,
-          fallback: true,
-          message: data.message || 'Using local similarity search',
-          totalFound: allResults.length,
-          filteredOut: allResults.length - finalResults.length
-        };
-
-        setResults(searchResult);
-
-        // Save results to backend if ideaId is provided
-        if (ideaId && finalResults.length > 0) {
-          await saveSearchResults(ideaId, query.trim(), searchResult);
-        }
-
-      } catch (localApiError) {
-        console.error('Both edge function and local API failed:', localApiError);
-        setError('Similarity search is currently unavailable. Please try again later.');
-        setResults(null);
-      }
+    } catch (apiError) {
+      console.error('Local API failed:', apiError);
+      setError('Similarity search is currently unavailable. Please try again later.');
+      setResults(null);
     } finally {
       setIsSearching(false);
     }

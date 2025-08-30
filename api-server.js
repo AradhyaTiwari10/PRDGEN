@@ -30,7 +30,89 @@ const DEEPSEEK_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const SYSTEM_PROMPT = `Generate a detailed, implementation-ready PRD structured with these 8 sections: Executive Summary, Product Overview, User Stories & Use Cases, Functional Requirements, Technical Requirements, Non-Functional Requirements, Implementation Phases, and Success Criteria. Each section must be comprehensive, specific, and actionable for developers/AI coding assistants, with technical detail, concrete examples, and clear KPIs.`;
 
-// PRD Generation endpoint
+// PRD Generation endpoint using Gemini
+app.post('/api/generate-prd', async (req, res) => {
+  try {
+    const { idea, category, targetAudience } = req.body;
+
+    if (!idea) {
+      return res.status(400).json({
+        error: 'Missing required field: idea'
+      });
+    }
+
+    // Check if Gemini AI is available
+    if (!genAI) {
+      console.error('❌ Gemini AI not initialized');
+      return res.status(500).json({
+        error: 'Gemini AI not configured. Please check GEMINI_API_TOKEN environment variable.'
+      });
+    }
+
+    console.log('🚀 Generating PRD with Gemini for:', idea.substring(0, 50) + '...');
+
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    });
+
+    const prompt = `Generate a comprehensive PRD (Product Requirements Document) for the following startup idea:
+
+Idea: ${idea}
+Category: ${category || 'To be determined'}
+Target Audience: ${targetAudience || 'To be determined'}
+
+Structure the PRD with the following sections:
+1. Executive Summary
+2. Product Overview
+3. User Stories & Use Cases
+4. Functional Requirements
+5. Technical Requirements
+6. Non-Functional Requirements
+7. Implementation Phases
+8. Success Criteria
+
+Make sure each section is detailed, specific, and actionable for developers and product managers. Use clear formatting with headers, bullet points, and numbered lists where appropriate. Format in clean Markdown with clear hierarchical structure.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const prdContent = response.text();
+
+    console.log('✅ PRD generated successfully with Gemini');
+    
+    res.json({ prd: prdContent });
+  } catch (error) {
+    console.error('❌ Error generating PRD with Gemini:', error);
+    
+    // Handle specific Gemini API errors
+    if (error.message && error.message.includes('quota')) {
+      return res.status(429).json({
+        error: 'API quota exceeded. Please try again later or check your Gemini API limits.'
+      });
+    }
+    if (error.message && error.message.includes('rate limit')) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded. Please wait a moment and try again.'
+      });
+    }
+    if (error.message && error.message.includes('API key')) {
+      return res.status(401).json({
+        error: 'Invalid API key. Please check your Gemini API configuration.'
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to generate PRD. Please try again.'
+    });
+  }
+});
+
+// Legacy DeepSeek PRD Generation endpoint (kept for backward compatibility)
 app.post('/api/generate-prd-deepseek', async (req, res) => {
   try {
     const { idea } = req.body;
@@ -339,7 +421,7 @@ Be concise, valuable, and engaging - no lengthy explanations!`;
   }
 });
 
-// Similarity Search endpoint as fallback
+// Similarity Search endpoint using Product Hunt database
 app.post('/api/similarity-search', async (req, res) => {
   try {
     const { query, limit = 10, minSimilarity = 0.1 } = req.body;
@@ -350,64 +432,171 @@ app.post('/api/similarity-search', async (req, res) => {
       });
     }
 
-    console.log(`🔍 Local similarity search for: "${query}"`);
+    console.log(`🔍 Product Hunt similarity search for: "${query}"`);
 
-    // Simple mock similarity search for development
-    // In a real implementation, this would search a database
-    const mockResults = [
-      {
-        rank: 1,
-        id: 'mock-1',
-        name: 'StudyFlow: Academic Organizer',
-        description: 'A comprehensive study management app that helps students organize their coursework, track assignments, and improve productivity.',
-        similarity: 0.85,
-        similarityPercentage: '85%',
-        upvotes: 234,
-        category_tags: 'Education, Productivity',
-        websites: 'https://studyflow.app',
-        makers: 'StudyFlow Team'
-      },
-      {
-        rank: 2,
-        id: 'mock-2',
-        name: 'TaskMaster: Student Planner',
-        description: 'Digital planner designed specifically for students to manage homework, projects, and exam schedules effectively.',
-        similarity: 0.78,
-        similarityPercentage: '78%',
-        upvotes: 189,
-        category_tags: 'Education, Planning',
-        websites: 'https://taskmaster.edu',
-        makers: 'EduTech Inc'
-      },
-      {
-        rank: 3,
-        id: 'mock-3',
-        name: 'FocusTime: Study Timer',
-        description: 'Pomodoro-based study timer with analytics to help students maintain focus and track study sessions.',
-        similarity: 0.65,
-        similarityPercentage: '65%',
-        upvotes: 156,
-        category_tags: 'Productivity, Time Management',
-        websites: 'https://focustime.app',
-        makers: 'Productivity Labs'
-      }
+    // Check if Product Hunt database credentials are available
+    const productHuntUrl = process.env.VITE_SUPABASE_URL_2;
+    const productHuntKey = process.env.VITE_SUPABASE_ANON_KEY_2;
+
+    console.log('🔍 Debug - Product Hunt URL:', productHuntUrl ? 'Set' : 'Not set');
+    console.log('🔍 Debug - Product Hunt Key:', productHuntKey ? 'Set' : 'Not set');
+
+    if (!productHuntUrl || !productHuntKey) {
+      console.error('❌ Product Hunt database credentials not configured');
+      console.error('❌ Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+      return res.status(500).json({
+        error: 'Product Hunt database not configured. Please set VITE_SUPABASE_URL_2 and VITE_SUPABASE_ANON_KEY_2 environment variables.'
+      });
+    }
+
+    // Create Product Hunt database client
+    const { createClient } = await import('@supabase/supabase-js');
+    const productHuntSupabase = createClient(productHuntUrl, productHuntKey);
+
+    // Search in Product Hunt products table with improved query processing
+    const searchQuery = query.substring(0, 100);
+    
+    // Extract key terms for broader search
+    const keyTerms = searchQuery.toLowerCase()
+      .split(/\s+/)
+      .filter(term => term.length > 2)
+      .slice(0, 5); // Take first 5 meaningful terms
+    
+    // Create multiple search patterns
+    const searchPatterns = [
+      // Full query search
+      `name.ilike.%${searchQuery}%,product_description.ilike.%${searchQuery}%,category_tags.ilike.%${searchQuery}%`,
+      // Individual term search
+      ...keyTerms.map(term => `name.ilike.%${term}%,product_description.ilike.%${term}%,category_tags.ilike.%${term}%`)
     ];
+    
+    // Try broader search first
+    let { data: products, error } = await productHuntSupabase
+      .from('product_hunt_products')
+      .select('id, name, product_description, category_tags, upvotes, websites, makers')
+      .or(searchPatterns.join(','))
+      .limit(Math.min(limit * 5, 100)); // Get more results for better filtering
+    
+    // If no results, try even broader search with common real estate terms
+    if (!products || products.length === 0) {
+      const realEstateTerms = ['property', 'real estate', 'home', 'house', 'buying', 'selling', 'rental', 'marketplace'];
+      const broaderPatterns = realEstateTerms.map(term => 
+        `name.ilike.%${term}%,product_description.ilike.%${term}%,category_tags.ilike.%${term}%`
+      );
+      
+      const { data: broaderProducts, error: broaderError } = await productHuntSupabase
+        .from('product_hunt_products')
+        .select('id, name, product_description, category_tags, upvotes, websites, makers')
+        .or(broaderPatterns.join(','))
+        .limit(Math.min(limit * 3, 50));
+      
+      if (broaderProducts && broaderProducts.length > 0) {
+        products = broaderProducts;
+        error = null;
+      }
+    }
 
-    // Filter results based on similarity threshold and query relevance
-    const filteredResults = mockResults
+    if (error) {
+      console.error('❌ Product Hunt database search error:', error);
+      throw new Error(`Product Hunt search failed: ${error.message}`);
+    }
+
+    console.log(`📊 Found ${products?.length || 0} potential matches from Product Hunt`);
+
+    // Calculate similarity scores with improved algorithm
+    const calculateSimilarity = (query, title, description, category) => {
+      const queryLower = query.toLowerCase();
+      const titleLower = (title || '').toLowerCase();
+      const descLower = (description || '').toLowerCase();
+      const categoryLower = (category || '').toLowerCase();
+      
+      let score = 0;
+      
+      // Extract key terms from query
+      const queryTerms = queryLower.split(/\s+/).filter(word => word.length > 2);
+      
+      // Exact matches get highest score
+      if (titleLower === queryLower) score += 10;
+      else if (titleLower.includes(queryLower)) score += 7;
+      else if (queryLower.includes(titleLower) && titleLower.length > 3) score += 6;
+      
+      // Description matching
+      if (descLower.includes(queryLower)) score += 5;
+      
+      // Category matching
+      if (categoryLower.includes(queryLower)) score += 4;
+      
+      // Word-level matching with improved scoring
+      let wordMatches = 0;
+      let exactWordMatches = 0;
+      
+      for (const word of queryTerms) {
+        if (titleLower.includes(word)) {
+          wordMatches += 3;
+          exactWordMatches += 1;
+        }
+        if (descLower.includes(word)) {
+          wordMatches += 2;
+        }
+        if (categoryLower.includes(word)) {
+          wordMatches += 2;
+        }
+      }
+      
+      score += Math.min(wordMatches, 12);
+      
+      // Bonus for multiple word matches
+      if (exactWordMatches >= 2) score += 3;
+      if (exactWordMatches >= 3) score += 2;
+      
+      // Bonus for domain relevance (real estate terms)
+      const realEstateTerms = ['property', 'real estate', 'home', 'house', 'buying', 'selling', 'rental', 'marketplace', 'agent', 'broker'];
+      const domainMatches = realEstateTerms.filter(term => 
+        titleLower.includes(term) || descLower.includes(term) || categoryLower.includes(term)
+      ).length;
+      
+      score += Math.min(domainMatches * 2, 6);
+      
+      // Convert to 0-1 scale
+      return Math.max(0, Math.min(1, score / 20));
+    };
+
+    // Process results with similarity scoring
+    const results = (products || [])
+      .map((product, index) => {
+        const similarity = calculateSimilarity(query, product.name, product.product_description, product.category_tags);
+        
+        return {
+          rank: index + 1,
+          id: product.id,
+          name: product.name,
+          description: product.product_description,
+          similarity: Math.round(similarity * 100) / 100,
+          similarityPercentage: `${Math.round(similarity * 100)}%`,
+          upvotes: product.upvotes || 0,
+          category_tags: product.category_tags,
+          websites: product.websites,
+          makers: product.makers
+        };
+      })
       .filter(result => result.similarity >= minSimilarity)
-      .slice(0, limit);
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit)
+      .map((result, index) => ({
+        ...result,
+        rank: index + 1
+      }));
 
-    console.log(`✅ Returning ${filteredResults.length} mock similarity results`);
+    console.log(`✅ Returning ${results.length} Product Hunt similarity results`);
 
     res.json({
       success: true,
-      results: filteredResults,
+      results,
       query,
-      totalFound: filteredResults.length,
+      totalFound: results.length,
       searchParams: { limit, minSimilarity },
-      fallback: true,
-      message: 'Using local mock similarity search - configure Supabase for real data'
+      fallback: false,
+      message: 'Searching Product Hunt database for similar products'
     });
 
   } catch (error) {
@@ -437,9 +626,10 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 API Server running on http://localhost:${PORT}`);
   console.log('📡 Endpoints available:');
-  console.log(`   POST http://localhost:${PORT}/api/generate-prd-deepseek`);
-  console.log(`   POST http://localhost:${PORT}/api/enhance-idea`);
-  console.log(`   POST http://localhost:${PORT}/api/idea-assistant`);
+  console.log(`   POST http://localhost:${PORT}/api/generate-prd (Gemini)`);
+console.log(`   POST http://localhost:${PORT}/api/generate-prd-deepseek (Legacy)`);
+console.log(`   POST http://localhost:${PORT}/api/enhance-idea`);
+console.log(`   POST http://localhost:${PORT}/api/idea-assistant`);
   console.log(`   POST http://localhost:${PORT}/api/similarity-search`);
   console.log(`   GET  http://localhost:${PORT}/health`);
 });
