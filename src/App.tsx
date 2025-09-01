@@ -19,6 +19,7 @@ import { NotFound as GhostNotFound } from "@/components/ui/ghost-404-page";
 import TestGhost404 from "@/pages/TestGhost404";
 import PrivacyPolicyPage from "@/app/privacy/page";
 import TermsOfServicePage from "@/app/terms/page";
+import AuthCallback from "@/app/auth/callback/page";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route
             path="/generate"

@@ -1,64 +1,111 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
+
+// Global cache to prevent multiple simultaneous auth requests
+let authPromise: Promise<{ user: User | null; error: any }> | null = null;
+let lastAuthCheck = 0;
+const AUTH_CACHE_DURATION = 5000; // 5 seconds cache
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const isInitialized = useRef(false);
+
+  // Centralized auth check with caching
+  const checkAuth = async (force = false): Promise<{ user: User | null; error: any }> => {
+    const now = Date.now();
+    
+    // Return cached result if within cache duration and not forced
+    if (!force && authPromise && (now - lastAuthCheck) < AUTH_CACHE_DURATION) {
+      return authPromise;
+    }
+
+    // If there's already a request in progress, wait for it
+    if (authPromise && !force) {
+      return authPromise;
+    }
+
+    // Create new auth check
+    authPromise = (async () => {
+      try {
+        console.log('🔍 Checking authentication...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        lastAuthCheck = now;
+        
+        if (error) {
+          console.error('Session error:', error);
+          
+          // Handle specific JWT user_not_found error
+          if (error.message?.includes('user_not_found') || error.message?.includes('JWT')) {
+            console.log('JWT error detected, clearing session...');
+            await supabase.auth.signOut();
+            return { user: null, error };
+          }
+          return { user: null, error };
+        }
+        
+        const user = session?.user ?? null;
+        console.log('✅ Auth check complete:', user ? user.email : 'No user');
+        return { user, error: null };
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        return { user: null, error };
+      }
+    })();
+
+    return authPromise;
+  };
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Session error:', error);
-        
-        // Handle specific JWT user_not_found error
-        if (error.message?.includes('user_not_found') || error.message?.includes('JWT')) {
-          console.log('JWT error detected, clearing session...');
-          supabase.auth.signOut();
-          setUser(null);
-        }
-      } else {
-        setUser(session?.user ?? null);
-      }
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    // Initial auth check
+    checkAuth().then(({ user, error }) => {
+      setUser(user);
       setLoading(false);
     });
 
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Single auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state change:', event);
-      console.log('👤 User:', session?.user?.email);
-      console.log('🆔 User ID:', session?.user?.id);
-      console.log('📋 Full session:', session);
       
-      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+      if (event === 'INITIAL_SESSION') {
+        console.log('🔄 Initial session check');
+        const user = session?.user ?? null;
+        setUser(user);
+        setLoading(false);
+        return;
+      }
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         console.log('✅ User signed in or token refreshed');
-        // Verify user exists in database when token is refreshed
-        if (session?.user) {
-          verifyUserExists(session.user.id);
+        const user = session?.user ?? null;
+        setUser(user);
+        setLoading(false);
+        
+        // Only verify user exists on SIGNED_IN, not TOKEN_REFRESHED
+        if (event === 'SIGNED_IN' && user) {
+          verifyUserExists(user.id);
         }
+        return;
       }
       
       if (event === 'SIGNED_OUT') {
         console.log('🚪 User signed out');
+        setUser(null);
+        setLoading(false);
+        return;
       }
-      
-      if (event === 'INITIAL_SESSION') {
-        console.log('🔄 Initial session check');
-        if (session?.user) {
-          console.log('✅ Found existing session for:', session.user.email);
-        } else {
-          console.log('❌ No existing session found');
-        }
-      }
-      
-      setUser(session?.user ?? null);
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      isInitialized.current = false;
+    };
   }, []);
 
   const verifyUserExists = async (userId: string) => {
@@ -129,14 +176,13 @@ export function useAuth() {
   const refreshSession = async () => {
     console.log('🔄 Manually refreshing session...');
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('📋 Session refresh result:', { session: !!session, user: session?.user?.email, error });
+      const { user, error } = await checkAuth(true); // Force refresh
       
       if (error) {
         console.error('❌ Session refresh error:', error);
-      } else if (session?.user) {
-        console.log('✅ Session refreshed successfully for:', session.user.email);
-        setUser(session.user);
+      } else if (user) {
+        console.log('✅ Session refreshed successfully for:', user.email);
+        setUser(user);
       } else {
         console.log('❌ No session found after refresh');
         setUser(null);

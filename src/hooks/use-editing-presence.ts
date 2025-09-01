@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from './use-auth';
 
 export interface EditingPresence {
   user_id: string;
@@ -14,22 +15,19 @@ export interface EditingPresence {
 export function useEditingPresence(ideaId: string) {
   const [activeEditors, setActiveEditors] = useState<EditingPresence[]>([]);
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string } | null>(null);
+  const { user } = useAuth();
 
   // Initialize current user
   useEffect(() => {
-    const initUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous';
-        setCurrentUser({
-          id: user.id,
-          email: user.email || '',
-          name: userName
-        });
-      }
-    };
-    initUser();
-  }, []);
+    if (user) {
+      const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous';
+      setCurrentUser({
+        id: user.id,
+        email: user.email || '',
+        name: userName
+      });
+    }
+  }, [user]);
 
   // Fetch active editors
   const fetchActiveEditors = useCallback(async () => {

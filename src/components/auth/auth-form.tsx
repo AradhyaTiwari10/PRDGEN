@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,72 +48,35 @@ export function AuthForm({ mode }: AuthFormProps) {
     resolver: zodResolver(authSchema),
   });
 
-  // Check current authentication state on mount
+  // Use the centralized auth hook instead of duplicate calls
+  const { user } = useAuth();
+
+  // Monitor authentication state changes for navigation
   useEffect(() => {
-    const checkCurrentAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('Current auth state on mount:', { 
-        session: !!session, 
-        user: session?.user?.email, 
-        error,
-        sessionData: session 
+    if (user) {
+      console.log('✅ User successfully signed in!');
+      console.log('👤 User email:', user.email);
+      console.log('🆔 User ID:', user.id);
+      console.log('📧 User details:', {
+        email: user.email,
+        id: user.id,
+        user_metadata: user.user_metadata,
+        app_metadata: user.app_metadata
       });
-    };
-    checkCurrentAuth();
-  }, []);
-
-  // Monitor authentication state changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔍 Auth state change event:', event);
-      console.log('📋 Session data:', session);
-      console.log('👤 User email:', session?.user?.email);
-      console.log('🆔 User ID:', session?.user?.id);
       
-      if (event === 'INITIAL_SESSION') {
-        console.log('🔄 Initial session check - this is normal on page load');
-        if (session?.user) {
-          console.log('✅ User already signed in:', session.user.email);
-        } else {
-          console.log('❌ No active session found');
-        }
-      }
+      toast({
+        title: "Welcome!",
+        description: `Successfully signed in as ${user.email}`,
+      });
       
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✅ User successfully signed in!');
-        console.log('👤 User email:', session.user.email);
-        console.log('🆔 User ID:', session.user.id);
-        console.log('📧 User details:', {
-          email: session.user.email,
-          id: session.user.id,
-          user_metadata: session.user.user_metadata,
-          app_metadata: session.user.app_metadata
-        });
-        
-        toast({
-          title: "Welcome!",
-          description: `Successfully signed in as ${session.user.email}`,
-        });
-        
-        // Navigate to landing page with prompt parameter if it exists
-        if (promptParam) {
-          navigate(`/?prompt=${encodeURIComponent(promptParam)}`);
-        } else {
-          navigate("/");
-        }
+      // Navigate to landing page with prompt parameter if it exists
+      if (promptParam) {
+        navigate(`/?prompt=${encodeURIComponent(promptParam)}`);
+      } else {
+        navigate("/");
       }
-      
-      if (event === 'SIGNED_OUT') {
-        console.log('🚪 User signed out');
-      }
-      
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 Token refreshed for user:', session?.user?.email);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate, promptParam]);
+    }
+  }, [user, navigate, promptParam]);
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);

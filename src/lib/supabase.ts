@@ -13,6 +13,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10,
     },
   },
+  auth: {
+    redirectTo: `${window.location.origin}/auth/callback`,
+  },
 })
 
 export type Database = {

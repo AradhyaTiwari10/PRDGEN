@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useAuth } from './use-auth';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
@@ -49,30 +50,23 @@ export function useBlockNoteCollaboration(ideaId: string) {
     return USER_COLORS[Math.abs(hash) % USER_COLORS.length];
   }, []);
 
+  const { user } = useAuth();
+
   // Initialize current user
   useEffect(() => {
-    const initializeUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const currentUser: BlockNoteCollaborator = {
-            id: user.id,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
-            email: user.email || '',
-            color: getUserColor(user.id),
-            isOnline: true,
-            lastSeen: new Date(),
-          };
+    if (user) {
+      const currentUser: BlockNoteCollaborator = {
+        id: user.id,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous',
+        email: user.email || '',
+        color: getUserColor(user.id),
+        isOnline: true,
+        lastSeen: new Date(),
+      };
 
-          setState(prev => ({ ...prev, currentUser }));
-        }
-      } catch (error) {
-        console.error('Failed to initialize user:', error);
-      }
-    };
-
-    initializeUser();
-  }, [getUserColor]);
+      setState(prev => ({ ...prev, currentUser }));
+    }
+  }, [user, getUserColor]);
 
   // Initialize Yjs and collaboration
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { useAuth } from './use-auth';
 
 export interface CollaboratorPresence {
   user_id: string;
@@ -48,27 +49,21 @@ export function useRealtimeCollaboration(ideaId: string) {
     return COLLABORATOR_COLORS[Math.abs(hash) % COLLABORATOR_COLORS.length];
   }, []);
 
+  const { user } = useAuth();
+
   // Initialize current user
   useEffect(() => {
-    const initUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous';
-          setCurrentUser({
-            id: user.id,
-            email: user.email || '',
-            name: userName
-          });
-          userColorRef.current = getUserColor(user.id);
-          console.log('🔧 User initialized:', { id: user.id, name: userName });
-        }
-      } catch (error) {
-        console.error('❌ Failed to initialize user:', error);
-      }
-    };
-    initUser();
-  }, [getUserColor]);
+    if (user) {
+      const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Anonymous';
+      setCurrentUser({
+        id: user.id,
+        email: user.email || '',
+        name: userName
+      });
+      userColorRef.current = getUserColor(user.id);
+      console.log('🔧 User initialized:', { id: user.id, name: userName });
+    }
+  }, [user, getUserColor]);
 
   // Set up real-time channel
   useEffect(() => {

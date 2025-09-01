@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
 import { PRD } from "@/types";
 import { PRDViewer } from "@/components/prd/prd-viewer";
 import { Button } from "@/components/ui/button";
@@ -20,24 +21,19 @@ export default function PRDPage() {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const { user: authUser, isAuthenticated, loading } = useAuth();
+
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+    if (!isAuthenticated && !loading) {
+      navigate("/login");
+      return;
+    }
 
-      if (error || !user) {
-        navigate("/login");
-        return;
-      }
-
-      setUser(user);
-      fetchPRD(user.id);
-    };
-
-    checkAuth();
-  }, [navigate, id]);
+    if (authUser) {
+      setUser(authUser);
+      fetchPRD(authUser.id);
+    }
+  }, [authUser, isAuthenticated, loading, navigate, id]);
 
   const fetchPRD = async (userId: string) => {
     try {
